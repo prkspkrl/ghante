@@ -1,0 +1,47 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>How It Works | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/services/">Services</a>
+            <a href="/popular-projects/">Popular projects</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <p class="eyebrow">How it works</p>
+            <h1>From posting a task to getting it done.</h1>
+            <p>Book Assembly, Mounting, Moving, Cleaning, Outdoor Help, Home Repairs, and Painting through one simple flow.</p>
+        </section>
+
+        <section class="process page-section">
+            <article><strong>1</strong><h2>Describe the job</h2><p>Tell workers what you need, where the task is, your timing, and any important details.</p></article>
+            <article><strong>2</strong><h2>Choose a worker</h2><p>Compare rates, skills, reviews, verification details, and availability before booking.</p></article>
+            <article><strong>3</strong><h2>Chat and confirm</h2><p>Use built-in messaging to clarify the task and confirm the schedule.</p></article>
+            <article><strong>4</strong><h2>Pay and review</h2><p>Track completion, manage payment, and leave a review to help the next customer.</p></article>
+        </section>
+    </main>
+</body>
+</html>

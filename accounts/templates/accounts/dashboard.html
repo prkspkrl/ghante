@@ -1,0 +1,61 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+</head>
+<body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <a class="brand" href="/">Ghantey</a>
+            <h1>Dashboard</h1>
+            <p>You are logged in as <strong>{{ request.user.username }}</strong>.</p>
+            {% if request.user.profile %}
+                <p>Full name: <strong>{{ request.user.profile.full_name }}</strong></p>
+                <p>Account type: <strong>{{ request.user.profile.get_role_display }}</strong></p>
+                <p>Email verified:
+                    {% if request.user.profile.email_verified %}
+                        <strong class="verified">Yes</strong>
+                    {% else %}
+                        <strong class="unverified">No</strong>
+                    {% endif %}
+                </p>
+                <p>Phone verified:
+                    {% if request.user.profile.phone_verified %}
+                        <strong class="verified">Yes</strong>
+                    {% else %}
+                        <strong class="unverified">No</strong>
+                    {% endif %}
+                </p>
+            {% endif %}
+
+            {% if messages %}
+                <div class="messages">
+                    {% for msg in messages %}
+                        <div class="msg {{ msg.tags }}">{{ msg }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="dashboard-links">
+                <a href="/accounts/profile/" class="dash-btn">Edit Profile</a>
+                <a href="/accounts/change-password/" class="dash-btn">Change Password</a>
+                {% if not request.user.profile.email_verified %}
+                    <a href="{% url 'send_phone_verification' %}" class="dash-btn">Verify Phone</a>
+                {% endif %}
+                {% if not request.user.profile.phone_verified %}
+                    <a href="/accounts/verify-phone/" class="dash-btn">Enter Phone Code</a>
+                {% endif %}
+                <a href="/accounts/password-reset/" class="dash-btn">Forgot Password</a>
+                <form method="post" action="/accounts/logout/" class="compact-form">
+                    {% csrf_token %}
+                    <button type="submit" class="dash-btn logout-btn">Logout</button>
+                </form>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

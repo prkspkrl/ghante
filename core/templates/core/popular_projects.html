@@ -1,0 +1,53 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Popular Projects | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/services/">Services</a>
+            <a href="/popular-projects/">Popular projects</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <p class="eyebrow">Popular projects</p>
+            <h1>Book common tasks faster.</h1>
+            <p>Start with a ready-made project, compare worker profiles, and schedule help as early as today.</p>
+        </section>
+
+        <section class="project-grid page-section">
+            <article class="project-card"><div class="project-image assembly-bg"></div><h3>Furniture Assembly</h3><p>Projects starting at Rs. 1,200</p></article>
+            <article class="project-card"><div class="project-image mounting-bg"></div><h3>Mount Art or Shelves</h3><p>Projects starting at Rs. 900</p></article>
+            <article class="project-card"><div class="project-image tv-bg"></div><h3>TV Mounting</h3><p>Projects starting at Rs. 1,500</p></article>
+            <article class="project-card"><div class="project-image moving-bg"></div><h3>Help Moving</h3><p>Projects starting at Rs. 1,800</p></article>
+            <article class="project-card"><div class="project-image cleaning-bg"></div><h3>Home Cleaning</h3><p>Projects starting at Rs. 1,000</p></article>
+            <article class="project-card"><div class="project-image repair-bg"></div><h3>Minor Repairs</h3><p>Projects starting at Rs. 1,400</p></article>
+            <article class="project-card"><div class="project-image assembly-bg"></div><h3>Heavy Lifting</h3><p>Projects starting at Rs. 1,600</p></article>
+            <article class="project-card"><div class="project-image mounting-bg"></div><h3>Light Installation</h3><p>Projects starting at Rs. 1,300</p></article>
+            <article class="project-card"><div class="project-image cleaning-bg"></div><h3>Yard Cleanup</h3><p>Projects starting at Rs. 1,100</p></article>
+            <article class="project-card"><div class="project-image painting-bg"></div><h3>Painting</h3><p>Projects starting at Rs. 2,000</p></article>
+        </section>
+    </main>
+</body>
+</html>

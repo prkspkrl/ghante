@@ -1,0 +1,25 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Email Verification | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+</head>
+<body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <a class="brand" href="/">Ghantey</a>
+            {% if success %}
+                <h1>Email Verified</h1>
+                <p>Your email address has been verified successfully.</p>
+            {% else %}
+                <h1>Verification Failed</h1>
+                <p>The verification link is invalid or expired.</p>
+            {% endif %}
+            <p class="auth-switch"><a href="/accounts/dashboard/">Back to Dashboard</a></p>
+        </section>
+    </main>
+</body>
+</html>

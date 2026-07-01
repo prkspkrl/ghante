@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 520" role="img" aria-label="Booking app illustration">
+  <rect width="640" height="520" fill="#e7f5ed"/>
+  <rect x="196" y="44" width="248" height="432" rx="42" fill="#173226"/>
+  <rect x="218" y="76" width="204" height="360" rx="28" fill="#ffffff"/>
+  <rect x="246" y="112" width="148" height="34" rx="17" fill="#e7f5ed"/>
+  <rect x="246" y="174" width="148" height="86" rx="18" fill="#d8efe1"/>
+  <rect x="246" y="282" width="148" height="42" rx="14" fill="#0f7b45"/>
+  <rect x="246" y="346" width="92" height="18" rx="9" fill="#dbe7df"/>
+  <circle cx="394" cy="356" r="18" fill="#f6c177"/>
+</svg>

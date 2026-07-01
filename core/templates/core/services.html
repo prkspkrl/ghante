@@ -1,0 +1,50 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Services | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/services/">Services</a>
+            <a href="/popular-projects/">Popular projects</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <p class="eyebrow">Services</p>
+            <h1>Find help for every part of your home.</h1>
+            <p>Browse common job categories and choose trusted local workers by skill, rate, reviews, and availability.</p>
+        </section>
+
+        <section class="service-grid page-section">
+            <article><span>Assembly</span><h2>Assembly</h2><p>Beds, tables, shelves, cabinets, wardrobes, and more.</p></article>
+            <article><span>Mounting</span><h2>Mounting</h2><p>TVs, shelves, mirrors, curtains, frames, and decor.</p></article>
+            <article><span>Moving</span><h2>Moving</h2><p>Loading, unloading, packing, lifting, and shifting items.</p></article>
+            <article><span>Cleaning</span><h2>Cleaning</h2><p>One-time, apartment, room, kitchen, and deep cleaning.</p></article>
+            <article><span>Outdoor Help</span><h2>Outdoor Help</h2><p>Garden cleanup, yard work, delivery help, and errands.</p></article>
+            <article><span>Home Repairs</span><h2>Home Repairs</h2><p>Small plumbing, electrical, fixture, door, and furniture fixes.</p></article>
+            <article><span>Painting</span><h2>Painting</h2><p>Interior painting, touch-ups, doors, trims, and fence painting.</p></article>
+        </section>
+    </main>
+</body>
+</html>

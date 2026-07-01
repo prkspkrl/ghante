@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Furniture assembly illustration">
+  <rect width="640" height="420" fill="#e8f5ed"/>
+  <circle cx="520" cy="80" r="78" fill="#ccebd9"/>
+  <rect x="92" y="214" width="456" height="34" rx="17" fill="#173226"/>
+  <rect x="130" y="246" width="42" height="104" rx="12" fill="#0f7b45"/>
+  <rect x="466" y="246" width="42" height="104" rx="12" fill="#0f7b45"/>
+  <rect x="174" y="134" width="292" height="72" rx="20" fill="#ffffff"/>
+  <path d="M216 171h208" stroke="#0f7b45" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="156" cy="156" r="26" fill="#f6c177"/>
+  <path d="M134 210c16-22 58-22 74 0v70h-74z" fill="#2d6cdf"/>
+  <path d="M116 246l86-42" stroke="#173226" stroke-width="14" stroke-linecap="round"/>
+</svg>

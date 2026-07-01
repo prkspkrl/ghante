@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Wall mounting illustration">
+  <rect width="640" height="420" fill="#eef5ff"/>
+  <rect x="96" y="74" width="448" height="272" rx="30" fill="#ffffff"/>
+  <rect x="132" y="108" width="170" height="116" rx="18" fill="#dce9ff"/>
+  <rect x="338" y="108" width="170" height="116" rx="18" fill="#e8f5e9"/>
+  <rect x="132" y="252" width="376" height="28" rx="14" fill="#173226"/>
+  <circle cx="216" cy="166" r="34" fill="#0f7b45"/>
+  <path d="M380 178l36-42 54 68h-126z" fill="#0f7b45"/>
+  <path d="M190 312h260" stroke="#0f7b45" stroke-width="18" stroke-linecap="round"/>
+</svg>

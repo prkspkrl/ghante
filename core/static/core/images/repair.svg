@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Home repair illustration">
+  <rect width="640" height="420" fill="#fff8e8"/>
+  <rect x="128" y="120" width="384" height="220" rx="28" fill="#ffffff"/>
+  <path d="M208 282l158-158" stroke="#173226" stroke-width="26" stroke-linecap="round"/>
+  <path d="M350 108l68 68" stroke="#0f7b45" stroke-width="34" stroke-linecap="round"/>
+  <path d="M250 126l-48 48" stroke="#f6c177" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="444" cy="284" r="42" fill="#dff1e4"/>
+  <path d="M424 284h40" stroke="#0f7b45" stroke-width="14" stroke-linecap="round"/>
+</svg>

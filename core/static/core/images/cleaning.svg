@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Home cleaning illustration">
+  <rect width="640" height="420" fill="#effaff"/>
+  <circle cx="168" cy="118" r="48" fill="#ccebd9"/>
+  <circle cx="510" cy="100" r="62" fill="#d8f1ff"/>
+  <rect x="180" y="152" width="236" height="178" rx="34" fill="#ffffff"/>
+  <path d="M246 330h204" stroke="#0f7b45" stroke-width="18" stroke-linecap="round"/>
+  <path d="M350 150l76 188" stroke="#173226" stroke-width="18" stroke-linecap="round"/>
+  <path d="M396 286l76 38" stroke="#0f7b45" stroke-width="18" stroke-linecap="round"/>
+  <path d="M244 220c22 24 72 24 94 0" stroke="#0f7b45" stroke-width="14" stroke-linecap="round"/>
+</svg>

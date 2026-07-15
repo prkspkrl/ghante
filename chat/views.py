@@ -21,18 +21,20 @@ def chat_with_worker(request, pk):
         if not message:
             messages.error(request, 'Message cannot be empty.')
             return redirect('chat_worker', pk=worker.pk)
+        sender_name = ''
+        if hasattr(request.user, 'profile'):
+            sender_name = getattr(request.user.profile, 'full_name', '') or ''
+        if not sender_name:
+            sender_name = request.user.get_full_name() or request.user.username
         ChatMessage.objects.create(
             worker=worker,
             sender=request.user,
-            sender_name=request.user.profile.full_name or request.user.username,
+            sender_name=sender_name,
             message=message,
         )
         return redirect('chat_worker', pk=worker.pk)
 
-    from django.db.models import Q
-    worker_user = worker.user
     chat_messages = ChatMessage.objects.filter(
-        Q(sender=request.user) | Q(sender=worker_user),
         worker=worker,
     ).order_by('sent_at')
 
@@ -48,10 +50,7 @@ def chat_messages_json(request, pk):
         return JsonResponse({'error': 'unauthorized'}, status=401)
 
     last_id = request.GET.get('last_id', 0)
-    from django.db.models import Q
-    worker_user = worker.user
     new_msgs = ChatMessage.objects.filter(
-        Q(sender=request.user) | Q(sender=worker_user),
         worker=worker, id__gt=last_id,
     ).order_by('sent_at').values('id', 'sender_name', 'message', 'sent_at', 'sender_id')
 
@@ -140,17 +139,26 @@ def worker_chat_reply(request, pk):
         return redirect('home')
 
     sender_user = get_object_or_404(User, pk=pk)
-    sender_name = sender_user.profile.full_name or sender_user.username
+    sender_name = ''
+    if hasattr(sender_user, 'profile'):
+        sender_name = getattr(sender_user.profile, 'full_name', '') or ''
+    if not sender_name:
+        sender_name = sender_user.get_full_name() or sender_user.username
 
     if request.method == 'POST':
         message = request.POST.get('message', '').strip()
         if not message:
             messages.error(request, 'Message cannot be empty.')
             return redirect('worker_chat_reply', pk=pk)
+        worker_name = ''
+        if hasattr(request.user, 'profile'):
+            worker_name = getattr(request.user.profile, 'full_name', '') or ''
+        if not worker_name:
+            worker_name = profile.name or request.user.username
         ChatMessage.objects.create(
             worker=profile,
             sender=request.user,
-            sender_name=f'{profile.name} (Worker)',
+            sender_name=worker_name,
             message=message,
         )
         return redirect('worker_chat_reply', pk=pk)
@@ -161,9 +169,7 @@ def worker_chat_reply(request, pk):
         is_read=False,
     ).update(is_read=True)
 
-    from django.db.models import Q
     chat_messages = ChatMessage.objects.filter(
-        Q(sender=sender_user) | Q(sender=request.user),
         worker=profile,
     ).order_by('sent_at')
 
@@ -184,9 +190,7 @@ def worker_chat_json(request, pk):
     sender_user = get_object_or_404(User, pk=pk)
     last_id = request.GET.get('last_id', 0)
 
-    from django.db.models import Q
     new_msgs = ChatMessage.objects.filter(
-        Q(sender=sender_user) | Q(sender=request.user),
         worker=profile, id__gt=last_id,
     ).order_by('sent_at').values('id', 'sender_name', 'message', 'sent_at', 'sender_id')
 

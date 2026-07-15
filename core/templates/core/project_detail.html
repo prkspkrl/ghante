@@ -1,0 +1,202 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ project.title }} | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .project-detail-page { max-width: 1100px; margin: 0 auto; padding: 40px 16px 80px; }
+        .project-hero {
+            padding: 48px; border-radius: 24px; margin-bottom: 40px;
+            background: linear-gradient(135deg, var(--green-soft) 0%, #d5f5e6 100%);
+        }
+        .project-hero-icon { font-size: 3rem; margin-bottom: 16px; }
+        .project-hero h1 { margin: 0 0 12px; font-size: 2rem; }
+        .project-hero p { margin: 0 0 20px; color: var(--muted); font-size: 1.05rem; max-width: 700px; line-height: 1.6; }
+        .project-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+        .project-stat { text-align: center; }
+        .project-stat .value { display: block; font-size: 1.5rem; font-weight: 800; color: var(--green-dark); }
+        .project-stat .label { font-size: 0.85rem; color: var(--muted); }
+        .project-tasks { margin-top: 32px; }
+        .project-tasks h2 { margin: 0 0 16px; font-size: 1.2rem; }
+        .task-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+        .task-tag {
+            padding: 8px 16px; border-radius: 999px; background: var(--white);
+            border: 1px solid var(--line); font-size: 0.9rem; font-weight: 600;
+        }
+        .workers-section { margin-top: 40px; }
+        .workers-section h2 { margin: 0 0 24px; font-size: 1.4rem; }
+        .worker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .worker-card {
+            border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
+            background: var(--white); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position: relative; text-decoration: none; color: var(--ink); display: block;
+        }
+        .worker-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(23,50,38,0.10); border-color: var(--green); }
+        .worker-card-cover {
+            height: 80px; background: linear-gradient(135deg, var(--green-soft) 0%, #d5f5e6 100%);
+            position: relative;
+        }
+        .worker-card-photo {
+            width: 72px; height: 72px; border-radius: 50%; overflow: hidden;
+            border: 3px solid var(--white); background: var(--cream);
+            position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%);
+        }
+        .worker-card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .worker-card-body { padding: 48px 20px 20px; text-align: center; }
+        .worker-card-name { margin: 0 0 6px; font-size: 1.05rem; }
+        .worker-card-skill {
+            display: inline-block; padding: 5px 14px; border-radius: 999px;
+            background: var(--green-soft); color: var(--green-dark); font-size: 0.8rem; font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .worker-card-rating { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 12px; }
+        .worker-card-stars { display: flex; gap: 2px; }
+        .worker-card-stars svg { width: 16px; height: 16px; fill: var(--yellow); }
+        .worker-card-rating-value { font-weight: 800; font-size: 0.9rem; }
+        .worker-card-divider { border: none; border-top: 1px solid var(--line); margin: 0 0 14px; }
+        .worker-card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .worker-card-rate { font-weight: 800; font-size: 0.95rem; }
+        .worker-card-location { color: var(--muted); font-size: 0.85rem; }
+        .no-workers { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .no-workers p { font-size: 1.1rem; }
+        .other-projects { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--line); }
+        .other-projects h3 { margin: 0 0 16px; font-size: 1rem; color: var(--muted); }
+        .other-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .other-link {
+            padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px;
+            text-decoration: none; color: var(--ink); font-size: 0.9rem; font-weight: 600;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .other-link:hover { border-color: var(--green); background: var(--green-soft); }
+        .other-link.active { border-color: var(--green); background: var(--green); color: var(--white); }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="project-detail-page">
+            <div class="project-hero">
+                <div class="project-hero-icon">{{ project.icon }}</div>
+                <h1>{{ project.title }}</h1>
+                <p>{{ project.description }}</p>
+                <div class="project-stats">
+                    <div class="project-stat">
+                        <span class="value">{{ total_workers }}</span>
+                        <span class="label">Available Workers</span>
+                    </div>
+                    <div class="project-stat">
+                        <span class="value">{{ avg_rating }}</span>
+                        <span class="label">Average Rating</span>
+                    </div>
+                    <div class="project-stat">
+                        <span class="value">{{ project.starting_rate }}</span>
+                        <span class="label">Starting Rate</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if project.tasks %}
+            <div class="project-tasks">
+                <h2>Common Tasks</h2>
+                <div class="task-tags">
+                    {% for task in project.tasks %}
+                    <span class="task-tag">{{ task }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="workers-section">
+                <h2>Available Workers ({{ total_workers }})</h2>
+
+                {% if workers %}
+                <div class="worker-grid">
+                    {% for w in workers %}
+                    <a href="{% url 'worker_detail' pk=w.pk %}" class="worker-card">
+                        <div class="worker-card-cover">
+                            <div class="worker-card-photo">
+                                {% if w.photo %}
+                                <img src="{{ w.photo.url }}" alt="{{ w.name }}">
+                                {% else %}
+                                <img src="https://i.pravatar.cc/150?img={{ w.pk }}" alt="{{ w.name }}">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="worker-card-body">
+                            <h3 class="worker-card-name">{{ w.name }}</h3>
+                            <span class="worker-card-skill">{{ w.skill }}</span>
+                            <div class="worker-card-rating">
+                                <div class="worker-card-stars">
+                                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                </div>
+                                <span class="worker-card-rating-value">{{ w.rating }}</span>
+                            </div>
+                            <hr class="worker-card-divider">
+                            <div class="worker-card-footer">
+                                <span class="worker-card-rate">Rs. {{ w.hourly_rate }}/hr</span>
+                                <span class="worker-card-location">{{ w.location }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-workers">
+                    <p>No workers available for this service yet. Check back soon!</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if other_projects %}
+            <div class="other-projects">
+                <h3>Other Services</h3>
+                <div class="other-links">
+                    {% for p in other_projects %}
+                    <a href="{% url 'project_detail' slug=p.slug %}" class="other-link {% if p.slug == slug %}active{% endif %}">
+                        {{ p.icon }} {{ p.title }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
+            <a href="/how-it-works/">How it works</a>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,150 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ worker.name }} | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/services/">Services</a>
+            <a href="/workers/">Workers</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="worker-detail-layout">
+            <div>
+                <div class="worker-detail-header">
+                    <div class="worker-detail-avatar-frame" style="overflow:hidden; border-radius:50%; width:88px; height:88px;">
+                        {% if worker.photo %}
+                        <img src="{{ worker.photo.url }}" alt="{{ worker.name }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                        {% else %}
+                        <img src="https://i.pravatar.cc/150?img={{ worker.pk }}" alt="{{ worker.name }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                        {% endif %}
+                    </div>
+                    <div class="worker-detail-header-text">
+                        <h1>{{ worker.name }}</h1>
+                        <span class="skill-badge">{{ worker.skill }}</span>
+                        {% if worker.is_verified %}
+                        <span style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 4px 10px; border-radius: 999px; background: #e7f5ed; color: #064f2a; font-size: 0.78rem; font-weight: 700;">&#10003; Verified</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="worker-detail-rating">
+                    <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    <span class="rating-num">{{ worker.rating }}</span>
+                    <span class="rating-label">{{ worker.jobs_count }} jobs completed</span>
+                </div>
+
+                {% if worker.bio %}
+                <div class="worker-detail-bio">{{ worker.bio }}</div>
+                {% endif %}
+
+                <div class="worker-detail-meta-grid">
+                    <div class="worker-detail-meta-item">
+                        <span class="label">Hourly rate</span>
+                        <span class="value green">Rs. {{ worker.hourly_rate }}</span>
+                    </div>
+                    <div class="worker-detail-meta-item">
+                        <span class="label">Location</span>
+                        <span class="value">{{ worker.location|default:"Not specified" }}</span>
+                    </div>
+                    <div class="worker-detail-meta-item">
+                        <span class="label">Status</span>
+                        <span class="value green">&#9679; Available</span>
+                    </div>
+                    <div class="worker-detail-meta-item">
+                        <span class="label">Jobs completed</span>
+                        <span class="value">{{ worker.jobs_count }}</span>
+                    </div>
+                </div>
+
+                {% if request.user.is_authenticated and worker.user == request.user %}
+                <p style="margin-top: 24px;"><a href="{% url 'worker_edit' pk=worker.pk %}" class="booking-btn" style="display: inline-flex; padding: 12px 28px; width: auto;">&#9998; Edit profile</a></p>
+                {% endif %}
+            </div>
+
+            <div class="booking-card">
+                {% if messages %}
+                <div class="messages" style="margin-bottom: 16px;">
+                    {% for msg in messages %}
+                    <div class="msg {{ msg.tags }}">{{ msg }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="booking-card-header">
+                    <h2>Book this worker</h2>
+                    <span class="price">Rs. {{ worker.hourly_rate }} <small>/hr</small></span>
+                </div>
+
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'chat_worker' pk=worker.pk %}" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; margin-bottom: 20px; border: 1px solid var(--green); border-radius: 14px; background: transparent; color: var(--green); font-weight: 800; font-size: 0.92rem; text-decoration: none; transition: background 0.2s, color 0.2s;">
+                    &#128172; Chat with {{ worker.name }}
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; margin-bottom: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--cream); color: var(--muted); font-weight: 800; font-size: 0.92rem; text-decoration: none; cursor: not-allowed; opacity: 0.7;" title="Login to chat">
+                    &#128274; Login to chat
+                </a>
+                {% endif %}
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <label for="name">Your name</label>
+                    <input id="name" name="name" type="text" value="{{ request.user.profile.full_name|default:'' }}" required placeholder="e.g. John Doe">
+
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" value="{{ request.user.email|default:'' }}" required placeholder="you@example.com">
+
+                    <label for="phone">Phone</label>
+                    <input id="phone" name="phone" type="tel" value="{{ request.user.profile.phone_number|default:'' }}" placeholder="e.g. 9841XXXXXX">
+
+                    <label for="date">Preferred date</label>
+                    <input id="date" name="date" type="date" required>
+
+                    <label for="time">Preferred time</label>
+                    <input id="time" name="time" type="time" min="08:00" max="20:00" step="900" style="cursor: pointer;">
+
+                    <label for="description">Describe the task</label>
+                    <textarea id="description" name="description" placeholder="What do you need help with? Describe the task in detail so the worker can prepare." required></textarea>
+
+                    <button type="submit" class="booking-btn">Send booking request</button>
+                    <div class="booking-guarantee">
+                        <span>&#10003;</span> Free cancellation &middot; No upfront payment
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/services/">Services</a>
+            <a href="/workers/">Workers</a>
+            <a href="/how-it-works/">How it works</a>
+            <a href="mailto:hello@ghantey.local">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

@@ -5,14 +5,31 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Services | Ghantey</title>
-    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .services-page { max-width: 1100px; margin: 0 auto; padding: 40px 16px 80px; }
+        .services-header { text-align: center; margin-bottom: 40px; }
+        .services-header h1 { margin: 0 0 8px; font-size: 1.8rem; }
+        .services-header p { margin: 0; color: var(--muted); font-size: 1rem; }
+        .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .category-card {
+            display: block; padding: 32px 24px; border: 1px solid var(--line); border-radius: 20px;
+            background: var(--white); text-decoration: none; color: var(--ink);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .category-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(23,50,38,0.10); border-color: var(--green); }
+        .category-icon { font-size: 2rem; margin-bottom: 12px; }
+        .category-card h2 { margin: 0 0 6px; font-size: 1.15rem; }
+        .category-card .count { color: var(--muted); font-size: 0.9rem; }
+        .no-categories { text-align: center; padding: 60px 20px; color: var(--muted); }
+    </style>
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="/">Ghantey</a>
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
         <nav class="nav" aria-label="Main navigation">
-            <a href="/services/">Services</a>
-            <a href="/popular-projects/">Popular projects</a>
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
             <a href="/how-it-works/">How it works</a>
         </nav>
         <div class="header-actions">
@@ -28,23 +45,40 @@
             {% endif %}
         </div>
     </header>
-
     <main>
-        <section class="page-hero">
-            <p class="eyebrow">Services</p>
-            <h1>Find help for every part of your home.</h1>
-            <p>Browse common job categories and choose trusted local workers by skill, rate, reviews, and availability.</p>
-        </section>
+        <div class="services-page">
+            <div class="services-header">
+                <h1>Services</h1>
+                <p>Browse workers by category. Click a category to see available workers.</p>
+            </div>
 
-        <section class="service-grid page-section">
-            <article><span>Assembly</span><h2>Assembly</h2><p>Beds, tables, shelves, cabinets, wardrobes, and more.</p></article>
-            <article><span>Mounting</span><h2>Mounting</h2><p>TVs, shelves, mirrors, curtains, frames, and decor.</p></article>
-            <article><span>Moving</span><h2>Moving</h2><p>Loading, unloading, packing, lifting, and shifting items.</p></article>
-            <article><span>Cleaning</span><h2>Cleaning</h2><p>One-time, apartment, room, kitchen, and deep cleaning.</p></article>
-            <article><span>Outdoor Help</span><h2>Outdoor Help</h2><p>Garden cleanup, yard work, delivery help, and errands.</p></article>
-            <article><span>Home Repairs</span><h2>Home Repairs</h2><p>Small plumbing, electrical, fixture, door, and furniture fixes.</p></article>
-            <article><span>Painting</span><h2>Painting</h2><p>Interior painting, touch-ups, doors, trims, and fence painting.</p></article>
-        </section>
+            {% if categories %}
+            <div class="category-grid">
+                {% for cat in categories %}
+                <a href="{% url 'service_detail' skill=cat.skill %}" class="category-card">
+                    <div class="category-icon">&#128295;</div>
+                    <h2>{{ cat.skill }}</h2>
+                    <span class="count">{{ cat.count }} worker{{ cat.count|pluralize }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-categories">
+                <p>No services available yet.</p>
+            </div>
+            {% endif %}
+        </div>
     </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
+            <a href="/how-it-works/">How it works</a>
+        </div>
+    </footer>
 </body>
 </html>

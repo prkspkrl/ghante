@@ -5,6 +5,6 @@ from .models import ChatMessage
 
 @admin.register(ChatMessage)
 class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ('sender_name', 'recipient_name', 'sent_at', 'is_read')
+    list_display = ('sender_name', 'worker', 'sent_at', 'is_read')
     list_filter = ('is_read', 'sent_at')
-    search_fields = ('sender_name', 'recipient_name', 'message')
+    search_fields = ('sender_name', 'worker__name', 'message')

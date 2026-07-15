@@ -4,15 +4,32 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Popular Projects | Ghantey</title>
-    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+    <title>Services | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .projects-page { max-width: 1100px; margin: 0 auto; padding: 40px 16px 80px; }
+        .projects-header { text-align: center; margin-bottom: 40px; }
+        .projects-header h1 { margin: 0 0 8px; font-size: 1.8rem; }
+        .projects-header p { margin: 0; color: var(--muted); font-size: 1rem; }
+        .project-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .project-card {
+            display: block; padding: 28px 20px; border: 1px solid var(--line); border-radius: 20px;
+            background: var(--white); text-decoration: none; color: var(--ink);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .project-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(23,50,38,0.10); border-color: var(--green); }
+        .project-icon { font-size: 2rem; margin-bottom: 12px; }
+        .project-card h3 { margin: 0 0 6px; font-size: 1rem; }
+        .project-card .rate { color: var(--green-dark); font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+        .project-card .count { color: var(--muted); font-size: 0.85rem; }
+    </style>
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="/">Ghantey</a>
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
         <nav class="nav" aria-label="Main navigation">
-            <a href="/services/">Services</a>
-            <a href="/popular-projects/">Popular projects</a>
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
             <a href="/how-it-works/">How it works</a>
         </nav>
         <div class="header-actions">
@@ -28,26 +45,37 @@
             {% endif %}
         </div>
     </header>
-
     <main>
-        <section class="page-hero">
-            <p class="eyebrow">Popular projects</p>
-            <h1>Book common tasks faster.</h1>
-            <p>Start with a ready-made project, compare worker profiles, and schedule help as early as today.</p>
-        </section>
+        <div class="projects-page">
+            <div class="projects-header">
+                <h1>Services</h1>
+                <p>Choose a service and find the best workers for your task.</p>
+            </div>
 
-        <section class="project-grid page-section">
-            <article class="project-card"><div class="project-image assembly-bg"></div><h3>Furniture Assembly</h3><p>Projects starting at Rs. 1,200</p></article>
-            <article class="project-card"><div class="project-image mounting-bg"></div><h3>Mount Art or Shelves</h3><p>Projects starting at Rs. 900</p></article>
-            <article class="project-card"><div class="project-image tv-bg"></div><h3>TV Mounting</h3><p>Projects starting at Rs. 1,500</p></article>
-            <article class="project-card"><div class="project-image moving-bg"></div><h3>Help Moving</h3><p>Projects starting at Rs. 1,800</p></article>
-            <article class="project-card"><div class="project-image cleaning-bg"></div><h3>Home Cleaning</h3><p>Projects starting at Rs. 1,000</p></article>
-            <article class="project-card"><div class="project-image repair-bg"></div><h3>Minor Repairs</h3><p>Projects starting at Rs. 1,400</p></article>
-            <article class="project-card"><div class="project-image assembly-bg"></div><h3>Heavy Lifting</h3><p>Projects starting at Rs. 1,600</p></article>
-            <article class="project-card"><div class="project-image mounting-bg"></div><h3>Light Installation</h3><p>Projects starting at Rs. 1,300</p></article>
-            <article class="project-card"><div class="project-image cleaning-bg"></div><h3>Yard Cleanup</h3><p>Projects starting at Rs. 1,100</p></article>
-            <article class="project-card"><div class="project-image painting-bg"></div><h3>Painting</h3><p>Projects starting at Rs. 2,000</p></article>
-        </section>
+            {% if projects %}
+            <div class="project-grid">
+                {% for p in projects %}
+                <a href="{% url 'project_detail' slug=p.slug %}" class="project-card">
+                    <div class="project-icon">{{ p.icon }}</div>
+                    <h3>{{ p.title }}</h3>
+                    <div class="rate">From {{ p.starting_rate }}/hr</div>
+                    <div class="count">{{ p.count }} worker{{ p.count|pluralize }}</div>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
     </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
+            <a href="/how-it-works/">How it works</a>
+        </div>
+    </footer>
 </body>
 </html>

@@ -14,6 +14,17 @@ from .forms import ProfileForm, RegisterForm
 from .models import UserProfile
 
 
+def _get_profile(user):
+    profile, _ = UserProfile.objects.get_or_create(
+        user=user,
+        defaults={
+            'role': 'customer',
+            'is_customer': True,
+        },
+    )
+    return profile
+
+
 def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -30,12 +41,32 @@ def register(request):
 
 @login_required
 def dashboard(request):
-    return render(request, 'accounts/dashboard.html')
+    context = {}
+    if request.user.is_authenticated:
+        from profiles.models import WorkerProfile
+        from chat.models import ChatMessage
+        from django.db.models import Count
+
+        worker_profile = WorkerProfile.objects.filter(user=request.user).first()
+        if worker_profile:
+            unread_conversations = (
+                ChatMessage.objects
+                .filter(worker=worker_profile, is_read=False)
+                .exclude(sender=request.user)
+                .values('sender', 'sender_name')
+                .annotate(count=Count('id'))
+                .order_by('-count')
+            )
+            total_unread = sum(c['count'] for c in unread_conversations)
+            context['unread_conversations'] = list(unread_conversations)
+            context['total_unread'] = total_unread
+            context['worker_profile'] = worker_profile
+    return render(request, 'accounts/dashboard.html', context)
 
 
 @login_required
 def profile(request):
-    profile = request.user.profile
+    profile = _get_profile(request.user)
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=profile)
         if form.is_valid():
@@ -88,7 +119,7 @@ def verify_email(request, token):
 
 @login_required
 def send_phone_verification(request):
-    profile = request.user.profile
+    profile = _get_profile(request.user)
     code = secrets.randbelow(900000) + 100000
     profile.phone_verification_code = str(code)
     profile.save(update_fields=['phone_verification_code'])
@@ -101,7 +132,7 @@ def send_phone_verification(request):
 
 @login_required
 def verify_phone(request):
-    profile = request.user.profile
+    profile = _get_profile(request.user)
     if request.method == 'POST':
         code = request.POST.get('code', '').strip()
         if code and code == profile.phone_verification_code:

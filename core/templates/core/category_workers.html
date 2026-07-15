@@ -1,0 +1,132 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ skill }} Workers | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .category-page { max-width: 1100px; margin: 0 auto; padding: 40px 16px 80px; }
+        .category-header { margin-bottom: 32px; }
+        .category-header h1 { margin: 0 0 8px; font-size: 1.8rem; }
+        .category-header p { margin: 0; color: var(--muted); }
+        .worker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .worker-card {
+            border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
+            background: var(--white); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position: relative; text-decoration: none; color: var(--ink); display: block;
+        }
+        .worker-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(23,50,38,0.10); border-color: var(--green); }
+        .worker-card-cover {
+            height: 80px; background: linear-gradient(135deg, var(--green-soft) 0%, #d5f5e6 100%);
+            position: relative;
+        }
+        .worker-card-photo {
+            width: 72px; height: 72px; border-radius: 50%; overflow: hidden;
+            border: 3px solid var(--white); background: var(--cream);
+            position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%);
+        }
+        .worker-card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .worker-card-body { padding: 48px 20px 20px; text-align: center; }
+        .worker-card-name { margin: 0 0 6px; font-size: 1.05rem; }
+        .worker-card-skill {
+            display: inline-block; padding: 5px 14px; border-radius: 999px;
+            background: var(--green-soft); color: var(--green-dark); font-size: 0.8rem; font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .worker-card-rating { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 12px; }
+        .worker-card-stars { display: flex; gap: 2px; }
+        .worker-card-stars svg { width: 16px; height: 16px; fill: var(--yellow); }
+        .worker-card-rating-value { font-weight: 800; font-size: 0.9rem; }
+        .worker-card-divider { border: none; border-top: 1px solid var(--line); margin: 0 0 14px; }
+        .worker-card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .worker-card-rate { font-weight: 800; font-size: 0.95rem; }
+        .worker-card-location { color: var(--muted); font-size: 0.85rem; }
+        .no-workers { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .no-workers p { font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="category-page">
+            <div class="category-header">
+                <h1>{{ skill }}</h1>
+                <p>{{ workers|length }} worker{{ workers|length|pluralize }} available</p>
+            </div>
+
+            {% if workers %}
+            <div class="worker-grid">
+                {% for w in workers %}
+                <a href="{% url 'worker_detail' pk=w.pk %}" class="worker-card">
+                    <div class="worker-card-cover">
+                        <div class="worker-card-photo">
+                            {% if w.photo %}
+                            <img src="{{ w.photo.url }}" alt="{{ w.name }}">
+                            {% else %}
+                            <img src="https://i.pravatar.cc/150?img={{ w.pk }}" alt="{{ w.name }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="worker-card-body">
+                        <h3 class="worker-card-name">{{ w.name }}</h3>
+                        <span class="worker-card-skill">{{ w.skill }}</span>
+                        <div class="worker-card-rating">
+                            <div class="worker-card-stars">
+                                <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                                <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84L18 6.71l-4 3.9.94 5.5L10 13.48l-4.94 2.63.94-5.5-4-3.9 5.61-.87z"/></svg>
+                            </div>
+                            <span class="worker-card-rating-value">{{ w.rating }}</span>
+                        </div>
+                        <hr class="worker-card-divider">
+                        <div class="worker-card-footer">
+                            <span class="worker-card-rate">Rs. {{ w.hourly_rate }}/hr</span>
+                            <span class="worker-card-location">{{ w.location }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-workers">
+                <p>No workers found for "{{ skill }}" yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
+            <a href="/how-it-works/">How it works</a>
+        </div>
+    </footer>
+</body>
+</html>

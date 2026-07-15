@@ -1,0 +1,184 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat with {{ worker.name }} | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .chat-page { max-width: 640px; margin: 0 auto; padding: 40px 16px 80px; }
+        .chat-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+        .chat-avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+        .chat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .chat-header-text h1 { margin: 0 0 2px; font-size: 1.3rem; }
+        .chat-header-text p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+        .chat-messages {
+            display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;
+            max-height: 400px; overflow-y: auto; padding: 16px;
+            border: 1px solid var(--line); border-radius: 16px; background: var(--cream);
+        }
+        .chat-msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; }
+        .chat-msg.sent { align-self: flex-end; background: var(--green); color: var(--white); border-bottom-right-radius: 4px; }
+        .chat-msg.received { align-self: flex-start; background: var(--white); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+        .chat-msg .sender-name { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 2px; }
+        .chat-msg.sent .sender-name { color: rgba(255,255,255,0.85); }
+        .chat-msg.received .sender-name { color: var(--green-dark); }
+        .chat-msg .meta { display: block; font-size: 0.75rem; margin-top: 4px; opacity: 0.7; }
+        .chat-empty { text-align: center; color: var(--muted); padding: 40px 0; font-size: 0.95rem; }
+        .chat-form-card { padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--white); box-shadow: 0 8px 24px rgba(23,50,38,0.04); }
+        .chat-form-card label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.88rem; }
+        .chat-form-card textarea {
+            width: 100%; padding: 12px 14px; margin-bottom: 16px;
+            border: 1px solid var(--line); border-radius: 12px; outline-color: var(--green);
+            font: inherit; background: var(--cream); transition: border-color 0.2s, background 0.2s;
+            min-height: 100px; resize: vertical;
+        }
+        .chat-form-card textarea:focus { background: var(--white); border-color: var(--green); }
+        .chat-send-btn {
+            display: block; width: 100%; padding: 14px; border: 0; border-radius: 14px;
+            background: linear-gradient(135deg, var(--green) 0%, #0a9a53 100%);
+            color: var(--white); font-weight: 800; font-size: 1rem; cursor: pointer;
+            transition: box-shadow 0.3s, transform 0.2s;
+        }
+        .chat-send-btn:hover { box-shadow: 0 8px 28px rgba(15,123,69,0.35); transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="chat-page">
+            <div class="chat-header">
+                <div class="chat-avatar">
+                    {% if worker.photo %}
+                    <img src="{{ worker.photo.url }}" alt="{{ worker.name }}">
+                    {% else %}
+                    <img src="https://i.pravatar.cc/150?img={{ worker.pk }}" alt="{{ worker.name }}">
+                    {% endif %}
+                </div>
+                <div class="chat-header-text">
+                    <h1>Chat with {{ worker.name }}</h1>
+                    <p>{{ worker.skill }}</p>
+                </div>
+            </div>
+
+            {% if messages %}
+            <div class="messages" style="margin-bottom: 16px;">
+                {% for msg in messages %}
+                <div class="msg {{ msg.tags }}">{{ msg }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="chat-messages" id="chatMessages">
+                {% for msg in chat_messages %}
+                <div class="chat-msg {% if msg.sender == request.user %}sent{% else %}received{% endif %}" data-id="{{ msg.id }}">
+                    <span class="sender-name">{{ msg.sender_name }}</span>
+                    {{ msg.message }}
+                    <span class="meta">{{ msg.sent_at|date:"M d, H:i" }}</span>
+                </div>
+                {% empty %}
+                <div class="chat-empty">
+                    <p>No messages yet. Send the first message to start the conversation.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="chat-form-card">
+                <form method="post">
+                    {% csrf_token %}
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" placeholder="Write your message to {{ worker.name }}..." required></textarea>
+                    <button type="submit" class="chat-send-btn">Send message</button>
+                </form>
+            </div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+        </div>
+    </footer>
+    <script>
+    (function() {
+        const container = document.getElementById('chatMessages');
+        const textarea = document.getElementById('message');
+        let lastId = {{ chat_messages.last.id|default:0 }};
+
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                gain.gain.value = 0.15;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+                osc.stop(ctx.currentTime + 0.25);
+            } catch(e) {}
+        }
+
+        function scrollToBottom() {
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function fetchNewMessages() {
+            fetch("{% url 'chat_messages_json' pk=worker.pk %}?last_id=" + lastId)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.messages && data.messages.length > 0) {
+                        const empty = container.querySelector('.chat-empty');
+                        if (empty) empty.remove();
+                        let hasNewReceived = false;
+                        data.messages.forEach(msg => {
+                            if (document.querySelector('[data-id="' + msg.id + '"]')) return;
+                            const div = document.createElement('div');
+                            div.className = 'chat-msg ' + (msg.is_mine ? 'sent' : 'received');
+                            div.setAttribute('data-id', msg.id);
+                            div.innerHTML = '<span class="sender-name">' + msg.sender_name + '</span>' + msg.message + '<span class="meta">' + msg.sent_at + '</span>';
+                            container.appendChild(div);
+                            lastId = msg.id;
+                            if (!msg.is_mine) hasNewReceived = true;
+                        });
+                        scrollToBottom();
+                        if (hasNewReceived) playBeep();
+                    }
+                });
+        }
+
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (textarea.value.trim()) {
+                    textarea.closest('form').submit();
+                }
+            }
+        });
+
+        scrollToBottom();
+        setInterval(fetchNewMessages, 3000);
+    })();
+    </script>
+</body>
+</html>

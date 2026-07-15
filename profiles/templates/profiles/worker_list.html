@@ -1,0 +1,94 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Available Workers | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/services/">Services</a>
+            <a href="/popular-projects/">Projects</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="page-hero">
+            <p class="eyebrow">Workforce</p>
+            <h1>Available workers</h1>
+            <p>Browse skilled workers ready to help with your tasks. Compare rates, ratings, and availability to find the perfect match.</p>
+        </div>
+        <div class="page-section">
+            {% if workers %}
+            <div class="worker-grid">
+                {% for w in workers %}
+                <a href="/workers/{{ w.pk }}/" class="worker-profile-card">
+                    <div class="worker-card-cover"></div>
+                    <div class="worker-card-photo">
+                        {% if w.photo %}
+                        <img src="{{ w.photo.url }}" alt="{{ w.name }}" loading="lazy">
+                        {% else %}
+                        <img src="https://i.pravatar.cc/150?img={{ w.pk }}" alt="{{ w.name }}" loading="lazy">
+                        {% endif %}
+                    </div>
+                    <div class="worker-card-body">
+                        <h3>{{ w.name }}{% if w.is_verified %} <span style="color: var(--green); font-size: 0.8rem;">&#10003;</span>{% endif %}</h3>
+                        <div class="worker-card-tags">
+                            <span class="worker-card-tag">{{ w.skill }}</span>
+                        </div>
+                        <div class="worker-card-rating">
+                            <span class="worker-card-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                            <span class="worker-card-rating-num">{{ w.rating }}</span>
+                            <span class="worker-card-rating-count">({{ w.jobs_count }})</span>
+                        </div>
+                        <div class="worker-card-divider"></div>
+                        <div class="worker-card-rate-row">
+                            <span class="worker-card-price">Rs. {{ w.hourly_rate }} <small>/hr</small></span>
+                            <span class="worker-card-location">&#128205; {{ w.location }}</span>
+                        </div>
+                    </div>
+                    <span class="worker-card-arrow">&rarr;</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 80px 20px;">
+                <p style="font-size: 3rem; margin-bottom: 16px;">&#128100;</p>
+                <h2 style="margin-bottom: 8px;">No workers listed yet</h2>
+                <p style="color: var(--muted);">Check back soon or create a worker profile to get started.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/services/">Services</a>
+            <a href="/workers/">Workers</a>
+            <a href="/how-it-works/">How it works</a>
+            <a href="mailto:hello@ghantey.local">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

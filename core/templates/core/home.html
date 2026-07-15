@@ -5,14 +5,53 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ghantey | Book trusted local help</title>
-    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .home-search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
+        .home-search-icon {
+            position: absolute;
+            left: 16px;
+            width: 20px;
+            height: 20px;
+            color: var(--muted);
+            pointer-events: none;
+            z-index: 2;
+        }
+        .home-search-wrapper .suggestions-dropdown {
+            display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+            background: #fff; border: 1px solid var(--line); border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.14); z-index: 100; max-height: 400px;
+            overflow-y: auto; padding: 8px 0;
+        }
+        .home-search-wrapper .suggestions-dropdown.active { display: block; }
+        .suggestion-category {
+            padding: 8px 18px 4px; font-size: 0.72rem; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.6px;
+        }
+        .suggestion-item {
+            display: flex; align-items: center; gap: 12px; padding: 11px 18px;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .suggestion-item:hover { background: var(--green-soft); }
+        .suggestion-icon {
+            width: 32px; height: 32px; border-radius: 10px; display: flex;
+            align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .suggestion-icon.skill { background: #e8f5e9; color: #2e7d32; }
+        .suggestion-icon.worker { background: #e3f2fd; color: #1565c0; }
+        .suggestion-icon.location { background: #fff3e0; color: #e65100; }
+        .suggestion-icon.popular { background: #fce4ec; color: #c62828; }
+        .suggestion-text { font-size: 0.95rem; font-weight: 500; }
+        .suggestion-type { font-size: 0.75rem; color: var(--muted); margin-left: auto; }
+        .suggestion-highlight { background: rgba(15,123,69,0.12); font-weight: 700; border-radius: 2px; }
+    </style>
 </head>
 <body>
     <header class="site-header">
         <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
         <nav class="nav" aria-label="Main navigation">
-            <a href="/services/">Services</a>
-            <a href="/popular-projects/">Popular projects</a>
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
             <a href="/how-it-works/">How it works</a>
         </nav>
         <div class="header-actions">
@@ -31,15 +70,25 @@
 
     <main>
         <section class="hero">
+            <div class="hero-shapes" aria-hidden="true">
+                <span class="shape shape-1"></span>
+                <span class="shape shape-2"></span>
+                <span class="shape shape-3"></span>
+            </div>
             <p class="partner-note">Local workers for everyday jobs</p>
-            <h1>Book trusted help for home tasks</h1>
-            <form class="search-card" action="#projects">
+            <h1><span class="gradient-text">Book trusted help</span> for home tasks</h1>
+            <form class="search-card" action="{% url 'search' %}" method="get" id="homeSearchForm">
                 <label for="task-search">What do you need help with?</label>
                 <div class="search-row">
-                    <input id="task-search" name="q" type="search" placeholder="Try furniture assembly, moving, cleaning...">
+                    <div class="home-search-wrapper">
+                        <svg class="home-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input id="task-search" name="q" type="search" placeholder="e.g. furniture assembly, moving, cleaning..." autocomplete="off">
+                        <div class="suggestions-dropdown" id="homeSuggestionsDropdown"></div>
+                    </div>
                     <button type="submit">Find help</button>
                 </div>
             </form>
+            <p class="trust-badge">&#10003; Trusted by 2,000+ customers across Nepal</p>
             <div id="services" class="service-tabs" aria-label="Service categories">
                 <a href="#assembly">Assembly</a>
                 <a href="/services/">Mounting</a>
@@ -57,22 +106,100 @@
                 <h2 id="home-services-title">Choose the help you need</h2>
             </div>
             <div class="service-grid compact-services">
-                <article><span>Assembly</span><h3>Furniture Assembly</h3><p>Build beds, desks, shelves, cabinets, and wardrobes.</p></article>
-                <article><span>Mounting</span><h3>Wall Mounting</h3><p>Mount TVs, art, shelves, mirrors, curtains, and decor.</p></article>
-                <article><span>Moving</span><h3>Moving Help</h3><p>Get support with packing, loading, lifting, and shifting.</p></article>
-                <article><span>Cleaning</span><h3>Home Cleaning</h3><p>Book room, apartment, kitchen, and deep cleaning help.</p></article>
-                <article><span>Outdoor Help</span><h3>Outdoor Work</h3><p>Handle yard cleanup, garden work, errands, and deliveries.</p></article>
-                <article><span>Home Repairs</span><h3>Minor Repairs</h3><p>Fix small plumbing, electrical, fixture, and furniture issues.</p></article>
-                <article><span>Painting</span><h3>Painting</h3><p>Refresh rooms, touch up walls, doors, trims, and fences.</p></article>
+                <article>
+                    <div class="service-icon">&#9874;</div>
+                    <h3>Furniture Assembly</h3>
+                    <p>Build beds, desks, shelves, cabinets, and wardrobes.</p>
+                    <span class="service-arrow">&rarr;</span>
+                </article>
+                <article>
+                    <div class="service-icon">&#128204;</div>
+                    <h3>Wall Mounting</h3>
+                    <p>Mount TVs, art, shelves, mirrors, curtains, and decor.</p>
+                    <span class="service-arrow">&rarr;</span>
+                </article>
+                <article>
+                    <div class="service-icon">&#128230;</div>
+                    <h3>Moving Help</h3>
+                    <p>Get support with packing, loading, lifting, and shifting.</p>
+                    <span class="service-arrow">&rarr;</span>
+                </article>
+                <article>
+                    <div class="service-icon">&#9979;</div>
+                    <h3>Home Cleaning</h3>
+                    <p>Book room, apartment, kitchen, and deep cleaning help.</p>
+                    <span class="service-arrow">&rarr;</span>
+                </article>
+                <article>
+                    <div class="service-icon">&#127793;</div>
+                    <h3>Outdoor Work</h3>
+                    <p>Handle yard cleanup, garden work, errands, and deliveries.</p>
+                    <span class="service-arrow">&rarr;</span>
+                </article>
+                <article>
+                    <div class="service-icon">&#128295;</div>
+                    <h3>Minor Repairs</h3>
+                    <p>Fix small plumbing, electrical, fixture, and furniture issues.</p>
+                    <span class="service-arrow">&rarr;</span>
+                </article>
+                <article>
+                    <div class="service-icon">&#127912;</div>
+                    <h3>Painting</h3>
+                    <p>Refresh rooms, touch up walls, doors, trims, and fences.</p>
+                    <span class="service-arrow">&rarr;</span>
+                </article>
             </div>
         </section>
+
+        {% if workers %}
+        <section class="section available-workers" aria-labelledby="workers-title">
+            <div class="section-heading">
+                <p class="eyebrow">Top workers</p>
+                <h2 id="workers-title">Choose the help you need</h2>
+            </div>
+            <div class="worker-grid">
+                {% for w in workers %}
+                <a href="/workers/{{ w.pk }}/" class="worker-profile-card">
+                    <div class="worker-card-cover"></div>
+                    <div class="worker-card-photo">
+                        {% if w.photo %}
+                        <img src="{{ w.photo.url }}" alt="{{ w.name }}" loading="lazy">
+                        {% else %}
+                        <img src="https://i.pravatar.cc/150?img={{ w.pk }}" alt="{{ w.name }}" loading="lazy">
+                        {% endif %}
+                    </div>
+                    <div class="worker-card-body">
+                        <h3>{{ w.name }}{% if w.is_verified %} <span style="color: var(--green); font-size: 0.8rem;">&#10003;</span>{% endif %}</h3>
+                        <div class="worker-card-tags">
+                            <span class="worker-card-tag">{{ w.skill }}</span>
+                        </div>
+                        <div class="worker-card-rating">
+                            <span class="worker-card-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                            <span class="worker-card-rating-num">{{ w.rating }}</span>
+                            <span class="worker-card-rating-count">({{ w.jobs_count }})</span>
+                        </div>
+                        <div class="worker-card-divider"></div>
+                        <div class="worker-card-rate-row">
+                            <span class="worker-card-price">Rs. {{ w.hourly_rate }} <small>/hr</small></span>
+                            <span class="worker-card-location">&#128205; {{ w.location }}</span>
+                        </div>
+                    </div>
+                    <span class="worker-card-arrow">&rarr;</span>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="section-footer-link">
+                <a href="/workers/" class="text-link">View all workers &rarr;</a>
+            </div>
+        </section>
+        {% endif %}
 
         <section class="featured-service" id="assembly">
             <div class="featured-copy">
                 <p class="eyebrow">Featured service</p>
                 <h2>Furniture assembly made simple</h2>
                 <p>Get help assembling beds, desks, shelves, wardrobes, and more. Choose a worker by price, skills, ratings, and availability.</p>
-                <a class="text-link" href="/popular-projects/">View popular tasks</a>
+                <a class="text-link" href="/popular-projects/">View services</a>
             </div>
             <div class="featured-panel">
                 <div class="worker-card">
@@ -94,7 +221,7 @@
 
         <section class="section" id="projects">
             <div class="section-heading">
-                <p class="eyebrow">Popular projects</p>
+                <p class="eyebrow">Services</p>
                 <h2>Get help with your to-do list</h2>
             </div>
             <div class="project-grid">
@@ -133,6 +260,21 @@
                     <h3>Painting</h3>
                     <p>Projects starting at Rs. 2,000</p>
                 </article>
+            </div>
+        </section>
+
+        <section class="section" id="categories">
+            <div class="section-heading">
+                <p class="eyebrow">Browse by category</p>
+                <h2>Find workers by skill</h2>
+            </div>
+            <div class="category-grid">
+                {% for cat in categories %}
+                <a href="{% url 'service_detail' skill=cat.skill %}" class="category-card">
+                    <h3>{{ cat.skill }}</h3>
+                    <p>{{ cat.count }} worker{{ cat.count|pluralize }}</p>
+                </a>
+                {% endfor %}
             </div>
         </section>
 
@@ -178,6 +320,27 @@
             </div>
         </section>
 
+        {% if not request.user.is_authenticated or not request.user.worker_profile %}
+        <section class="guarantee" id="become-worker">
+            <div>
+                <p class="eyebrow">Earn money</p>
+                <h2>List your skills and get booked</h2>
+                <p>Have a skill? Create your worker profile, set your rate, and start getting hired by people nearby.</p>
+                <a class="text-link" href="{% url 'worker_create' %}" style="color: white;">Create your profile &rarr;</a>
+            </div>
+            <div class="guarantee-list">
+                <article>
+                    <h3>Set your own rate</h3>
+                    <p>You decide what to charge per hour. No hidden fees.</p>
+                </article>
+                <article>
+                    <h3>Choose your jobs</h3>
+                    <p>Accept or decline booking requests based on your schedule.</p>
+                </article>
+            </div>
+        </section>
+        {% endif %}
+
         <section class="how-it-works" id="how-it-works">
             <div class="phone-preview" aria-hidden="true">
                 <div class="phone-screen">
@@ -205,8 +368,8 @@
             <p>Tackle your to-do list with trusted local help.</p>
         </div>
         <div class="footer-links">
-            <a href="/services/">Services</a>
-            <a href="/popular-projects/">Projects</a>
+            <a href="/workers/">Workers</a>
+            <a href="/popular-projects/">Services</a>
             <a href="/how-it-works/">How it works</a>
             {% if request.user.is_authenticated %}
                 <a href="/accounts/dashboard/">Profile</a>
@@ -217,5 +380,108 @@
             <a href="mailto:hello@ghantey.local">Contact</a>
         </div>
     </footer>
+    <script>
+    (function() {
+        const input = document.getElementById('task-search');
+        const dropdown = document.getElementById('homeSuggestionsDropdown');
+        const form = document.getElementById('homeSearchForm');
+        let debounceTimer = null;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function highlightMatch(text, query) {
+            if (!query) return escapeHtml(text);
+            const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp('(' + escaped + ')', 'gi');
+            return escapeHtml(text).replace(regex, '<span class="suggestion-highlight">$1</span>');
+        }
+
+        function typeIcon(type) {
+            const icons = { skill: '&#9881;', worker: '&#9786;', location: '&#128205;', popular: '&#9733;' };
+            return icons[type] || '&#8226;';
+        }
+
+        function typeLabel(type) {
+            return type.charAt(0).toUpperCase() + type.slice(1);
+        }
+
+        function renderSuggestions(suggestions, query) {
+            if (!suggestions.length) {
+                dropdown.classList.remove('active');
+                return;
+            }
+
+            const grouped = {};
+            suggestions.forEach(function(s) {
+                if (!grouped[s.type]) grouped[s.type] = [];
+                grouped[s.type].push(s);
+            });
+
+            const typeOrder = ['skill', 'worker', 'location', 'popular'];
+            let html = '';
+            typeOrder.forEach(function(type) {
+                if (!grouped[type]) return;
+                html += '<div class="suggestion-category">' + typeLabel(type) + '</div>';
+                grouped[type].forEach(function(s) {
+                    html += '<div class="suggestion-item" data-value="' + escapeHtml(s.text) + '">'
+                        + '<span class="suggestion-icon ' + type + '">' + typeIcon(type) + '</span>'
+                        + '<span class="suggestion-text">' + highlightMatch(s.text, query) + '</span>'
+                        + '<span class="suggestion-type">' + typeLabel(type) + '</span>'
+                        + '</div>';
+                });
+            });
+
+            dropdown.innerHTML = html;
+            dropdown.classList.add('active');
+        }
+
+        function fetchSuggestions(query) {
+            if (query.length < 2) {
+                dropdown.classList.remove('active');
+                return;
+            }
+            fetch('/search/suggestions/?q=' + encodeURIComponent(query))
+                .then(function(r) { return r.json(); })
+                .then(function(data) { renderSuggestions(data.suggestions, query); })
+                .catch(function() { dropdown.classList.remove('active'); });
+        }
+
+        input.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const val = this.value.trim();
+            debounceTimer = setTimeout(function() { fetchSuggestions(val); }, 300);
+        });
+
+        input.addEventListener('focus', function() {
+            const val = this.value.trim();
+            if (val.length >= 2) fetchSuggestions(val);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.home-search-wrapper')) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        dropdown.addEventListener('click', function(e) {
+            const item = e.target.closest('.suggestion-item');
+            if (item) {
+                input.value = item.getAttribute('data-value');
+                dropdown.classList.remove('active');
+                form.submit();
+            }
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                dropdown.classList.remove('active');
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

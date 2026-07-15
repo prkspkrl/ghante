@@ -1,0 +1,100 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if worker %}Edit{% else %}Create{% endif %} Worker Profile | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/accounts/dashboard/">Dashboard</a>
+            <form method="post" action="/accounts/logout/" class="header-logout">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </header>
+    <main>
+        <div class="worker-form-layout">
+            <h1>{% if worker %}Edit your worker profile{% else %}Become a worker{% endif %}</h1>
+            <p class="subtitle">List your skills and start getting booked by customers in your area. Set your own rate and schedule.</p>
+
+            {% if messages %}
+            <div class="messages">
+                {% for msg in messages %}
+                <div class="msg {{ msg.tags }}">{{ msg }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="worker-form-card">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <label for="name">Full name</label>
+                    <input id="name" name="name" type="text" value="{{ worker.name|default:'' }}" placeholder="e.g. Ram Sharma" required>
+
+                    <label for="photo">Profile photo</label>
+                    <input id="photo" name="photo" type="file" accept="image/*" style="padding: 10px; margin-bottom: 20px;">
+                    {% if worker and worker.photo %}
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: -16px 0 16px;">Current photo shown below. Upload new to replace.</p>
+                    {% endif %}
+
+                    <label for="citizenship_photo">Citizenship photo (for verification)</label>
+                    <input id="citizenship_photo" name="citizenship_photo" type="file" accept="image/*" style="padding: 10px; margin-bottom: 8px;">
+                    {% if worker and worker.citizenship_photo %}
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: -8px 0 16px;">Current citizenship on file. Upload new to replace.</p>
+                    {% elif worker and not worker.citizenship_photo %}
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: -8px 0 16px;">Upload a clear photo of your citizenship to get verified.</p>
+                    {% endif %}
+
+                    {% if worker %}
+                    <div style="padding: 14px 18px; border-radius: 14px; margin-bottom: 20px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; {% if worker.is_verified %}background: #e7f5ed; color: #064f2a; border: 1px solid #b8e0c8;{% else %}background: #fff7f0; color: #9a5700; border: 1px solid #f5deb3;{% endif %}">
+                        {% if worker.is_verified %}&#10003; You are verified{% else %}&#128274; Not verified yet{% endif %}
+                    </div>
+                    {% endif %}
+
+                    <label for="skill">Your skill / profession</label>
+                    <input id="skill" name="skill" type="text" value="{{ worker.skill|default:'' }}" placeholder="e.g. Furniture Assembly, Cleaning, Painting" required>
+
+                    <label for="bio">Bio / description</label>
+                    <textarea id="bio" name="bio" placeholder="Describe your experience, what services you offer, and what makes you great.">{{ worker.bio|default:'' }}</textarea>
+
+                    <label for="hourly_rate">Hourly rate (Rs.)</label>
+                    <input id="hourly_rate" name="hourly_rate" type="number" value="{{ worker.hourly_rate|default:'0' }}" min="0" placeholder="e.g. 800">
+
+                    <label for="location">Location</label>
+                    <input id="location" name="location" type="text" value="{{ worker.location|default:'' }}" placeholder="e.g. Kathmandu, Nepal">
+
+                    {% if worker %}
+                    <label style="display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 20px; cursor: pointer;">
+                        <input type="checkbox" name="is_available" {% if worker.is_available %}checked{% endif %} style="width: auto; margin: 0;">
+                        Available for work
+                    </label>
+                    {% endif %}
+
+                    <button type="submit">{% if worker %}Save changes{% else %}List my profile &rarr;{% endif %}</button>
+                </form>
+            </div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+            <a href="/how-it-works/">How it works</a>
+        </div>
+    </footer>
+</body>
+</html>

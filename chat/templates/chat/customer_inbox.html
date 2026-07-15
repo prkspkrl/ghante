@@ -1,0 +1,110 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Conversations | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .inbox-page { max-width: 700px; margin: 0 auto; padding: 40px 16px 80px; }
+        .inbox-header { margin-bottom: 28px; }
+        .inbox-header h1 { margin: 0 0 4px; font-size: 1.8rem; }
+        .inbox-header p { margin: 0; color: var(--muted); }
+        .inbox-list { display: flex; flex-direction: column; gap: 8px; }
+        .inbox-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px;
+            background: var(--white); text-decoration: none; color: var(--ink);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .inbox-item:hover { border-color: var(--green); box-shadow: 0 4px 16px rgba(15,123,69,0.08); }
+        .inbox-avatar {
+            width: 48px; height: 48px; border-radius: 50%; overflow: hidden;
+            flex-shrink: 0; background: var(--green-soft); display: grid; place-items: center;
+        }
+        .inbox-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .inbox-content { flex: 1; min-width: 0; }
+        .inbox-name { font-weight: 800; font-size: 0.95rem; margin-bottom: 2px; }
+        .inbox-skill { font-size: 0.78rem; color: var(--green-dark); font-weight: 600; margin-bottom: 2px; }
+        .inbox-last { color: var(--muted); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .inbox-meta { text-align: right; flex-shrink: 0; }
+        .inbox-time { color: var(--muted); font-size: 0.75rem; margin-bottom: 4px; }
+        .inbox-unread {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+            background: var(--green); color: var(--white); font-size: 0.72rem; font-weight: 800;
+        }
+        .inbox-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .inbox-empty p { font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/">Dashboard</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="inbox-page">
+            <div class="inbox-header">
+                <h1>&#128172; My Conversations</h1>
+                <p>Workers you've chatted with</p>
+            </div>
+
+            {% if conversations %}
+            <div class="inbox-list">
+                {% for conv in conversations %}
+                <a href="{% url 'chat_worker' pk=conv.worker.pk %}" class="inbox-item">
+                    <div class="inbox-avatar">
+                        {% if conv.worker.photo %}
+                        <img src="{{ conv.worker.photo.url }}" alt="{{ conv.worker.name }}">
+                        {% else %}
+                        <img src="https://i.pravatar.cc/150?img={{ conv.worker.pk }}" alt="{{ conv.worker.name }}">
+                        {% endif %}
+                    </div>
+                    <div class="inbox-content">
+                        <div class="inbox-name">{{ conv.worker.name }}</div>
+                        <div class="inbox-skill">{{ conv.worker.skill }}</div>
+                        <div class="inbox-last">{{ conv.last_message }}</div>
+                    </div>
+                    <div class="inbox-meta">
+                        <div class="inbox-time">{{ conv.last_time|timesince }} ago</div>
+                        {% if conv.unread %}
+                        <span class="inbox-unread">{{ conv.unread }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="inbox-empty">
+                <p style="font-size: 2.5rem; margin-bottom: 12px;">&#128172;</p>
+                <p>No conversations yet. Start chatting with a worker to see them here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+        </div>
+    </footer>
+</body>
+</html>

@@ -120,7 +120,15 @@
                     <input id="date" name="date" type="date" required>
 
                     <label for="time">Preferred time</label>
-                    <input id="time" name="time" type="time" min="08:00" max="20:00" step="900" style="cursor: pointer;">
+                    <select id="time" name="time" required>
+                        <option value="" disabled selected>Select a time slot</option>
+                        <option value="08:00">Morning (8:00 - 10:00 AM)</option>
+                        <option value="10:00">Late Morning (10:00 AM - 12:00 PM)</option>
+                        <option value="12:00">Afternoon (12:00 - 2:00 PM)</option>
+                        <option value="14:00">Late Afternoon (2:00 - 4:00 PM)</option>
+                        <option value="16:00">Evening (4:00 - 6:00 PM)</option>
+                        <option value="18:00">Late Evening (6:00 - 8:00 PM)</option>
+                    </select>
 
                     <label for="description">Describe the task</label>
                     <textarea id="description" name="description" placeholder="What do you need help with? Describe the task in detail so the worker can prepare." required></textarea>

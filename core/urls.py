@@ -12,4 +12,6 @@ urlpatterns = [
     path('project/<str:slug>/', views.project_detail, name='project_detail'),
     path('search/', views.search, name='search'),
     path('search/suggestions/', views.search_suggestions, name='search_suggestions'),
+    path('search-analytics/', views.search_analytics, name='search_analytics'),
+    path('search-analytics/csv/', views.search_analytics_csv, name='search_analytics_csv'),
 ]

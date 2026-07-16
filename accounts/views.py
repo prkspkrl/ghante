@@ -43,11 +43,12 @@ def register(request):
 def dashboard(request):
     context = {}
     if request.user.is_authenticated:
-        from profiles.models import WorkerProfile
+        from profiles.models import WorkerProfile, Booking
         from chat.models import ChatMessage
         from django.db.models import Count
 
-        worker_profile = WorkerProfile.objects.filter(user=request.user).first()
+        is_worker = hasattr(request.user, 'profile') and request.user.profile.is_worker
+        worker_profile = WorkerProfile.objects.filter(user=request.user).first() if is_worker else None
         if worker_profile:
             unread_conversations = (
                 ChatMessage.objects
@@ -61,6 +62,16 @@ def dashboard(request):
             context['unread_conversations'] = list(unread_conversations)
             context['total_unread'] = total_unread
             context['worker_profile'] = worker_profile
+
+        # Customer booking stats
+        customer_bookings = Booking.objects.filter(customer_email=request.user.email)
+        context['customer_stats'] = {
+            'posted': customer_bookings.count(),
+            'active': customer_bookings.filter(status__in=['pending', 'accepted']).count(),
+            'completed': customer_bookings.filter(status='completed').count(),
+            'cancelled': customer_bookings.filter(status__in=['cancelled', 'rejected']).count(),
+        }
+
     return render(request, 'accounts/dashboard.html', context)
 
 

@@ -1,5 +1,8 @@
+import csv
+
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
 from profiles.models import WorkerProfile
@@ -142,11 +145,18 @@ POPULAR_PROJECTS = {
 }
 
 
+from django.db.models import Q
+
+WORKER_Q = Q(user__isnull=True) | Q(user__profile__is_worker=True)
+
+
 def home(request):
-    workers = WorkerProfile.objects.filter(is_available=True).order_by('-created_at')[:8]
+    workers = WorkerProfile.objects.filter(
+        WORKER_Q, is_available=True
+    ).order_by('-created_at')[:8]
     categories = (
         WorkerProfile.objects
-        .filter(is_available=True)
+        .filter(WORKER_Q, is_available=True)
         .values('skill')
         .annotate(count=Count('id'))
         .order_by('-count')
@@ -160,7 +170,7 @@ def home(request):
 def services(request):
     categories = (
         WorkerProfile.objects
-        .filter(is_available=True)
+        .filter(WORKER_Q, is_available=True)
         .values('skill')
         .annotate(count=Count('id'))
         .order_by('-count')
@@ -174,7 +184,7 @@ def popular_projects(request):
         skills_q = Q()
         for skill in info['skills']:
             skills_q |= Q(skill__icontains=skill)
-        count = WorkerProfile.objects.filter(skills_q, is_available=True).count()
+        count = WorkerProfile.objects.filter(WORKER_Q, skills_q, is_available=True).count()
         projects.append({
             'slug': slug,
             'title': info['title'],
@@ -196,7 +206,7 @@ def project_detail(request, slug):
         skills_q |= Q(skill__icontains=skill)
 
     workers = WorkerProfile.objects.filter(
-        skills_q, is_available=True
+        WORKER_Q, skills_q, is_available=True
     ).order_by('-rating', '-jobs_count')
 
     total_workers = workers.count()
@@ -233,6 +243,7 @@ def service_detail(request, skill):
     })
 
     workers = WorkerProfile.objects.filter(
+        WORKER_Q,
         skill__icontains=skill,
         is_available=True,
     ).order_by('-rating', '-jobs_count')
@@ -245,7 +256,7 @@ def service_detail(request, skill):
 
     categories = (
         WorkerProfile.objects
-        .filter(is_available=True)
+        .filter(WORKER_Q, is_available=True)
         .values('skill')
         .annotate(count=Count('id'))
         .order_by('-count')
@@ -268,6 +279,7 @@ def search(request):
 
     if query:
         workers = WorkerProfile.objects.filter(
+            WORKER_Q,
             Q(skill__icontains=query) |
             Q(name__icontains=query) |
             Q(bio__icontains=query) |
@@ -298,21 +310,21 @@ def search_suggestions(request):
 
     skills = (
         WorkerProfile.objects
-        .filter(skill__icontains=q, is_available=True)
+        .filter(WORKER_Q, skill__icontains=q, is_available=True)
         .values_list('skill', flat=True)
         .distinct()[:5]
     )
 
     names = (
         WorkerProfile.objects
-        .filter(name__icontains=q, is_available=True)
+        .filter(WORKER_Q, name__icontains=q, is_available=True)
         .values_list('name', flat=True)
         .distinct()[:5]
     )
 
     locations = (
         WorkerProfile.objects
-        .filter(location__icontains=q, is_available=True)
+        .filter(WORKER_Q, location__icontains=q, is_available=True)
         .exclude(location='')
         .values_list('location', flat=True)
         .distinct()[:5]
@@ -346,3 +358,38 @@ def search_suggestions(request):
             unique.append(s)
 
     return JsonResponse({'suggestions': unique[:10]})
+
+
+@staff_member_required
+def search_analytics(request):
+    top_keywords = (
+        SearchQuery.objects
+        .exclude(keyword='')
+        .values('keyword')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:20]
+    )
+    recent_queries = SearchQuery.objects.select_related('user')[:50]
+    return render(request, 'core/search_analytics.html', {
+        'top_keywords': top_keywords,
+        'recent_queries': recent_queries,
+    })
+
+
+@staff_member_required
+def search_analytics_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="search_analytics.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Keyword', 'Results Count', 'User', 'Date'])
+
+    for q in SearchQuery.objects.select_related('user').order_by('-created_at'):
+        writer.writerow([
+            q.keyword,
+            q.results_count,
+            q.user.email if q.user else 'Anonymous',
+            q.created_at.strftime('%Y-%m-%d %H:%M'),
+        ])
+
+    return response

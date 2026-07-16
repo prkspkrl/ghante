@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Analytics - Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+    <style>
+        .analytics-card {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .analytics-card h2 {
+            margin: 0 0 16px;
+            font-size: 1.1rem;
+        }
+        .keyword-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+        }
+        .keyword-row:last-child { border-bottom: none; }
+        .keyword-text { font-weight: 600; }
+        .keyword-count {
+            background: var(--green-soft);
+            color: var(--green);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .query-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+            align-items: center;
+        }
+        .query-row:last-child { border-bottom: none; }
+        .query-user { color: var(--muted); font-size: 0.85rem; }
+        .query-time { color: var(--muted); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="section" style="max-width: 800px; margin: 0 auto;">
+            <h1 class="section-title" style="margin-bottom: 24px;">Search Analytics</h1>
+
+            <div style="margin-bottom: 20px;">
+                <a href="{% url 'search_analytics_csv' %}" class="cta-btn" style="text-decoration: none;">Download CSV</a>
+            </div>
+
+            <div class="analytics-card">
+                <h2>Top Searched Keywords</h2>
+                {% for item in top_keywords %}
+                    <div class="keyword-row">
+                        <span class="keyword-text">{{ item.keyword }}</span>
+                        <span class="keyword-count">{{ item.count }} searches</span>
+                    </div>
+                {% empty %}
+                    <p style="color: var(--muted);">No search data yet.</p>
+                {% endfor %}
+            </div>
+
+            <div class="analytics-card">
+                <h2>Recent Searches</h2>
+                {% for q in recent_queries %}
+                    <div class="query-row">
+                        <span class="keyword-text">{{ q.keyword }}</span>
+                        <span class="query-user">{{ q.user|default:"Anonymous" }}</span>
+                        <span class="query-time">{{ q.created_at|timesince }} ago</span>
+                    </div>
+                {% empty %}
+                    <p style="color: var(--muted);">No searches recorded.</p>
+                {% endfor %}
+            </div>
+
+            <p class="auth-switch"><a href="/accounts/dashboard/">Back to Dashboard</a></p>
+        </section>
+    </main>
+</body>
+</html>

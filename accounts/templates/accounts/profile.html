@@ -43,6 +43,16 @@
                 {% endfor %}
                 <button type="submit">Save Changes</button>
             </form>
+            <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line);">
+                <a href="/accounts/change-password/" style="display: block; padding: 10px 14px; border-radius: 10px; text-decoration: none; color: var(--ink); font-weight: 600; transition: background 0.15s;">
+                    <span style="margin-right: 6px;">&#128274;</span> Change Password
+                </a>
+                {% if not request.user.profile.phone_verified %}
+                    <a href="{% url 'send_phone_verification' %}" style="display: block; padding: 10px 14px; border-radius: 10px; text-decoration: none; color: var(--ink); font-weight: 600; transition: background 0.15s;">
+                        <span style="margin-right: 6px;">&#128241;</span> Verify Phone
+                    </a>
+                {% endif %}
+            </div>
             <p class="auth-switch"><a href="/accounts/dashboard/">Back to Dashboard</a></p>
         </section>
     </main>

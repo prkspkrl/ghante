@@ -10,12 +10,17 @@
 <body>
     <header class="site-header">
         <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
         <nav class="nav" aria-label="Main navigation">
             <a href="/">Home</a>
             <a href="/workers/">Workers</a>
         </nav>
         <div class="header-actions">
-            <a href="/accounts/dashboard/">Dashboard</a>
+            <a href="/accounts/dashboard/" class="nav-badge">Dashboard{% if total_unread %}<span class="nav-badge-count">{{ total_unread }}</span>{% endif %}</a>
             <form method="post" action="/accounts/logout/" class="header-logout">
                 {% csrf_token %}
                 <button type="submit">Logout</button>
@@ -36,6 +41,11 @@
             {% endif %}
 
             <div class="worker-form-card">
+                <div style="padding: 16px 18px; border-radius: 14px; margin-bottom: 24px; background: var(--cream); border: 1px solid var(--line);">
+                    <p style="margin: 0 0 4px; font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Account</p>
+                    <p style="margin: 0; font-weight: 700;">{{ request.user.profile.full_name|default:request.user.username }}</p>
+                    <p style="margin: 2px 0 0; color: var(--muted); font-size: 0.9rem;">{{ request.user.email }}</p>
+                </div>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <label for="name">Full name</label>
@@ -64,11 +74,37 @@
                     <label for="skill">Your skill / profession</label>
                     <input id="skill" name="skill" type="text" value="{{ worker.skill|default:'' }}" placeholder="e.g. Furniture Assembly, Cleaning, Painting" required>
 
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        {% for value, label in categories %}
+                        <option value="{{ value }}" {% if worker.category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+
                     <label for="bio">Bio / description</label>
                     <textarea id="bio" name="bio" placeholder="Describe your experience, what services you offer, and what makes you great.">{{ worker.bio|default:'' }}</textarea>
 
                     <label for="hourly_rate">Hourly rate (Rs.)</label>
                     <input id="hourly_rate" name="hourly_rate" type="number" value="{{ worker.hourly_rate|default:'0' }}" min="0" placeholder="e.g. 800">
+
+                    <label for="experience">Experience</label>
+                    <select id="experience" name="experience">
+                        <option value="">Select experience</option>
+                        {% for value, label in experience_choices %}
+                        <option value="{{ value }}" {% if worker.experience == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="languages">Languages</label>
+                    <input id="languages" name="languages" type="text" value="{{ worker.languages|default:'' }}" placeholder="e.g. English, Nepali, Hindi">
+
+                    <label for="availability">Availability</label>
+                    <select id="availability" name="availability">
+                        <option value="">Select availability</option>
+                        {% for value, label in availability_choices %}
+                        <option value="{{ value }}" {% if worker.availability == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
 
                     <label for="location">Location</label>
                     <input id="location" name="location" type="text" value="{{ worker.location|default:'' }}" placeholder="e.g. Kathmandu, Nepal">

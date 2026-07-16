@@ -20,7 +20,9 @@ def _validate_image(file, field_name):
 
 
 def worker_list(request):
-    workers = WorkerProfile.objects.filter(is_available=True).order_by('-created_at')
+    from django.db.models import Q
+    WORKER_Q = Q(user__isnull=True) | Q(user__profile__is_worker=True)
+    workers = WorkerProfile.objects.filter(WORKER_Q, is_available=True).order_by('-created_at')
     return render(request, 'profiles/worker_list.html', {'workers': workers})
 
 
@@ -50,6 +52,13 @@ def worker_detail(request, pk):
     return render(request, 'profiles/worker_detail.html', {'worker': worker})
 
 
+_FORM_CTX = {
+    'categories': WorkerProfile.CATEGORY_CHOICES,
+    'experience_choices': WorkerProfile.EXPERIENCE_CHOICES,
+    'availability_choices': WorkerProfile.AVAILABILITY_CHOICES,
+}
+
+
 @login_required
 def worker_create(request):
     if request.method == 'POST':
@@ -58,19 +67,23 @@ def worker_create(request):
         bio = request.POST.get('bio', '').strip()
         hourly_rate = request.POST.get('hourly_rate', '0')
         location = request.POST.get('location', '').strip()
+        category = request.POST.get('category', 'other')
+        languages = request.POST.get('languages', '').strip()
+        experience = request.POST.get('experience', '')
+        availability = request.POST.get('availability', '')
         photo = request.FILES.get('photo')
         citizenship_photo = request.FILES.get('citizenship_photo')
         if not name or not skill:
             messages.error(request, 'Name and skill are required.')
-            return render(request, 'profiles/worker_form.html')
+            return render(request, 'profiles/worker_form.html', _FORM_CTX)
         err = _validate_image(photo, 'Profile photo')
         if err:
             messages.error(request, err)
-            return render(request, 'profiles/worker_form.html')
+            return render(request, 'profiles/worker_form.html', _FORM_CTX)
         err = _validate_image(citizenship_photo, 'Citizenship photo')
         if err:
             messages.error(request, err)
-            return render(request, 'profiles/worker_form.html')
+            return render(request, 'profiles/worker_form.html', _FORM_CTX)
         obj, created = WorkerProfile.objects.update_or_create(
             user=request.user,
             defaults={
@@ -79,6 +92,10 @@ def worker_create(request):
                 'bio': bio,
                 'hourly_rate': int(hourly_rate) if hourly_rate.isdigit() else 0,
                 'location': location,
+                'category': category,
+                'languages': languages,
+                'experience': experience,
+                'availability': availability,
                 'is_available': True,
             },
         )
@@ -90,12 +107,13 @@ def worker_create(request):
         obj.save()
         messages.success(request, 'Worker profile created!')
         return redirect('worker_detail', pk=obj.pk)
-    return render(request, 'profiles/worker_form.html')
+    return render(request, 'profiles/worker_form.html', _FORM_CTX)
 
 
 @login_required
 def worker_edit(request, pk):
     worker = get_object_or_404(WorkerProfile, pk=pk, user=request.user)
+    ctx = {'worker': worker, **_FORM_CTX}
     if request.method == 'POST':
         worker.name = request.POST.get('name', worker.name).strip()
         worker.skill = request.POST.get('skill', worker.skill).strip()
@@ -103,17 +121,21 @@ def worker_edit(request, pk):
         hr = request.POST.get('hourly_rate', str(worker.hourly_rate)).strip()
         worker.hourly_rate = int(hr) if hr.isdigit() else worker.hourly_rate
         worker.location = request.POST.get('location', worker.location).strip()
+        worker.category = request.POST.get('category', worker.category)
+        worker.languages = request.POST.get('languages', worker.languages).strip()
+        worker.experience = request.POST.get('experience', worker.experience)
+        worker.availability = request.POST.get('availability', worker.availability)
         worker.is_available = request.POST.get('is_available') == 'on'
         photo = request.FILES.get('photo')
         citizenship_photo = request.FILES.get('citizenship_photo')
         err = _validate_image(photo, 'Profile photo')
         if err:
             messages.error(request, err)
-            return render(request, 'profiles/worker_form.html', {'worker': worker})
+            return render(request, 'profiles/worker_form.html', ctx)
         err = _validate_image(citizenship_photo, 'Citizenship photo')
         if err:
             messages.error(request, err)
-            return render(request, 'profiles/worker_form.html', {'worker': worker})
+            return render(request, 'profiles/worker_form.html', ctx)
         if photo:
             worker.photo = photo
         if citizenship_photo:
@@ -122,4 +144,91 @@ def worker_edit(request, pk):
         worker.save()
         messages.success(request, 'Profile updated.')
         return redirect('worker_detail', pk=worker.pk)
-    return render(request, 'profiles/worker_form.html', {'worker': worker})
+    return render(request, 'profiles/worker_form.html', ctx)
+
+
+@login_required
+def worker_bookings(request):
+    profile = WorkerProfile.objects.filter(user=request.user).first()
+    if not profile:
+        messages.error(request, 'You need a worker profile to view bookings.')
+        return redirect('home')
+
+    bookings = Booking.objects.filter(worker=profile).order_by('-created_at')
+    return render(request, 'profiles/worker_bookings.html', {
+        'profile': profile,
+        'bookings': bookings,
+    })
+
+
+@login_required
+def booking_action(request, pk):
+    profile = WorkerProfile.objects.filter(user=request.user).first()
+    if not profile:
+        messages.error(request, 'You need a worker profile.')
+        return redirect('home')
+
+    booking = get_object_or_404(Booking, pk=pk, worker=profile)
+
+    if request.method == 'POST':
+        from notifications.services import notify_booking_status
+
+        action = request.POST.get('action', '')
+        response = request.POST.get('response_message', '').strip()
+
+        if action == 'accept':
+            booking.status = 'accepted'
+            booking.response_message = response
+            booking.save()
+            notify_booking_status(booking, 'accepted')
+            messages.success(request, f'Booking from {booking.customer_name} accepted!')
+        elif action == 'reject':
+            booking.status = 'rejected'
+            booking.response_message = response
+            booking.save()
+            notify_booking_status(booking, 'rejected')
+            messages.success(request, f'Booking from {booking.customer_name} rejected.')
+        elif action == 'complete':
+            booking.status = 'completed'
+            booking.response_message = response
+            booking.save()
+            notify_booking_status(booking, 'completed')
+            messages.success(request, f'Booking from {booking.customer_name} marked as completed.')
+
+    return redirect('worker_bookings')
+
+
+@login_required
+def customer_bookings(request):
+    """Show bookings for the logged-in user's email."""
+    from notifications.models import Notification
+    Notification.objects.filter(
+        recipient_email=request.user.email, is_read=False,
+    ).update(is_read=True)
+
+    filter_val = request.GET.get('filter', 'all')
+    bookings = Booking.objects.filter(
+        customer_email=request.user.email,
+    ).select_related('worker').order_by('-created_at')
+    return render(request, 'profiles/customer_bookings.html', {
+        'bookings': bookings,
+        'filter': filter_val,
+    })
+
+
+@login_required
+def cancel_booking(request, pk):
+    """Allow customer to cancel a pending booking."""
+    if request.method != 'POST':
+        return redirect('customer_bookings')
+
+    booking = get_object_or_404(Booking, pk=pk, customer_email=request.user.email)
+
+    if booking.status != 'pending':
+        messages.error(request, 'Only pending bookings can be cancelled.')
+        return redirect('customer_bookings')
+
+    booking.status = 'cancelled'
+    booking.save()
+    messages.success(request, 'Booking cancelled successfully.')
+    return redirect('customer_bookings')

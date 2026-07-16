@@ -349,59 +349,94 @@
         </div>
 
         {% if total_unread %}
-        <div class="dash-unread-banner" onclick="window.location='{% url 'worker_inbox' %}'">
+        <div class="dash-unread-banner" onclick="window.location='{% if worker_profile %}{% url 'worker_inbox' %}{% else %}{% url 'customer_inbox' %}{% endif %}'">
             <div class="dash-unread-icon">&#128172;</div>
             <div class="dash-unread-info">
                 <strong>{{ total_unread }} unread message{{ total_unread|pluralize }}</strong>
+                {% if unread_conversations %}
                 <span>{% for conv in unread_conversations %}{{ conv.sender_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                {% endif %}
             </div>
             <span class="dash-unread-arrow">&rarr;</span>
         </div>
         {% endif %}
 
-        <p class="dash-section-title">Account</p>
+        <p class="dash-section-title">My Activity</p>
+        <div class="dash-status-grid">
+            <div class="dash-status-card">
+                <span class="label">Jobs Posted</span>
+                <span class="value">{{ customer_stats.posted }}</span>
+            </div>
+            <div class="dash-status-card">
+                <span class="label">Active Jobs</span>
+                <span class="value" style="color: #e65100;">{{ customer_stats.active }}</span>
+            </div>
+            <div class="dash-status-card">
+                <span class="label">Completed</span>
+                <span class="value" style="color: #2e7d32;">{{ customer_stats.completed }}</span>
+            </div>
+            <div class="dash-status-card">
+                <span class="label">Cancelled</span>
+                <span class="value" style="color: #c62828;">{{ customer_stats.cancelled }}</span>
+            </div>
+        </div>
+
+        <p class="dash-section-title">Quick Links</p>
         <div class="dash-actions">
-            <a href="/accounts/profile/" class="dash-action-btn primary">
-                <span class="icon">&#9998;</span> Edit Profile
-            </a>
             <a href="{% url 'customer_inbox' %}" class="dash-action-btn">
-                <span class="icon">&#128172;</span> My Conversations
+                <span class="icon">&#128172;</span> My Conversations{% if unread_messages %}<span class="nav-badge-count" style="margin-left:6px;">{{ unread_messages }}</span>{% endif %}
             </a>
+            <a href="{% url 'customer_bookings' %}" class="dash-action-btn">
+                <span class="icon">&#128197;</span> My Bookings
+            </a>
+            <a href="{% url 'notification_list' %}" class="dash-action-btn">
+                <span class="icon">&#128276;</span> Notifications{% if unread_notifications %}<span class="nav-badge-count" style="margin-left:6px;">{{ unread_notifications }}</span>{% endif %}
+            </a>
+            <a href="/workers/" class="dash-action-btn primary">
+                <span class="icon">&#128188;</span> Find Workers
+            </a>
+        </div>
+
+        <p class="dash-section-title">Worker Profile</p>
+        <div class="dash-actions">
             {% if worker_profile %}
-            <a href="{% url 'worker_inbox' %}" class="dash-action-btn">
-                <span class="icon">&#128172;</span> Worker Inbox
-            </a>
-            {% endif %}
-            <a href="/accounts/change-password/" class="dash-action-btn">
-                <span class="icon">&#128274;</span> Change Password
-            </a>
-            {% if not request.user.profile.phone_verified %}
-                <a href="{% url 'send_phone_verification' %}" class="dash-action-btn">
-                    <span class="icon">&#128241;</span> Verify Phone
+                <a href="/workers/{{ worker_profile.pk }}/" class="dash-action-btn">
+                    <span class="icon">&#128100;</span> View my worker profile
                 </a>
-            {% endif %}
-            {% if not request.user.profile.phone_verified %}
-                <a href="/accounts/verify-phone/" class="dash-action-btn">
-                    <span class="icon">&#128273;</span> Enter Phone Code
+                <a href="/workers/{{ worker_profile.pk }}/edit/" class="dash-action-btn">
+                    <span class="icon">&#9998;</span> Edit worker profile
+                </a>
+                <a href="{% url 'worker_inbox' %}" class="dash-action-btn">
+                    <span class="icon">&#128172;</span> Worker Inbox{% if unread_messages %}<span class="nav-badge-count" style="margin-left:6px;">{{ unread_messages }}</span>{% endif %}
+                </a>
+                <a href="{% url 'worker_bookings' %}" class="dash-action-btn primary">
+                    <span class="icon">&#128197;</span> Manage Bookings{% if pending_bookings %}<span class="nav-badge-count" style="margin-left:6px;">{{ pending_bookings }}</span>{% endif %}
+                </a>
+            {% else %}
+                <a href="/workers/create/" class="dash-action-btn primary">
+                    <span class="icon">&#128188;</span> Upgrade to Worker
                 </a>
             {% endif %}
         </div>
 
-        <p class="dash-section-title">Worker profile</p>
+        <p class="dash-section-title">Account Settings</p>
         <div class="dash-actions">
-            {% if request.user.worker_profile %}
-                <a href="/workers/{{ request.user.worker_profile.pk }}/" class="dash-action-btn">
-                    <span class="icon">&#128100;</span> View my worker profile
-                </a>
-                <a href="/workers/{{ request.user.worker_profile.pk }}/edit/" class="dash-action-btn">
-                    <span class="icon">&#9998;</span> Edit worker profile
-                </a>
-            {% else %}
-                <a href="/workers/create/" class="dash-action-btn primary">
-                    <span class="icon">&#128188;</span> List your skills
-                </a>
-            {% endif %}
+            <a href="/accounts/profile/" class="dash-action-btn primary">
+                <span class="icon">&#9881;</span> Site Settings
+            </a>
         </div>
+
+        {% if request.user.is_staff %}
+        <p class="dash-section-title">Admin</p>
+        <div class="dash-actions">
+            <a href="/search-analytics/" class="dash-action-btn primary">
+                <span class="icon">&#128202;</span> Search Analytics
+            </a>
+            <a href="/search-analytics/csv/" class="dash-action-btn">
+                <span class="icon">&#128229;</span> Download Analytics (CSV)
+            </a>
+        </div>
+        {% endif %}
 
         <p class="dash-section-title">Security</p>
         <div class="dash-actions">

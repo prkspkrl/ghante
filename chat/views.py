@@ -34,6 +34,12 @@ def chat_with_worker(request, pk):
         )
         return redirect('chat_worker', pk=worker.pk)
 
+    ChatMessage.objects.filter(
+        worker=worker,
+    ).exclude(sender=request.user).filter(
+        is_read=False,
+    ).update(is_read=True)
+
     chat_messages = ChatMessage.objects.filter(
         worker=worker,
     ).order_by('sent_at')
@@ -71,8 +77,7 @@ def chat_messages_json(request, pk):
 def worker_inbox(request):
     profile = WorkerProfile.objects.filter(user=request.user).first()
     if not profile:
-        messages.error(request, 'You need a worker profile to access inbox.')
-        return redirect('home')
+        return redirect('customer_inbox')
 
     from django.db.models import Max, Q
 

@@ -1,0 +1,109 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notifications | Ghantey</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .notif-page { max-width: 720px; margin: 0 auto; padding: 40px 16px 80px; }
+        .notif-header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .notif-header h1 { margin: 0; font-size: 1.8rem; }
+        .notif-mark-all {
+            padding: 10px 20px; border: 1px solid var(--line); border-radius: 12px;
+            background: var(--white); font-weight: 700; font-size: 0.88rem; cursor: pointer;
+            text-decoration: none; color: var(--ink);
+        }
+        .notif-mark-all:hover { border-color: var(--green); background: var(--green-soft); }
+        .notif-card {
+            padding: 20px 24px; margin-bottom: 12px;
+            border: 1px solid var(--line); border-radius: 16px;
+            background: var(--white); transition: box-shadow 0.2s;
+        }
+        .notif-card:hover { box-shadow: 0 4px 16px rgba(23,50,38,0.06); }
+        .notif-card.unread { border-left: 4px solid var(--green); background: #f8fdf9; }
+        .notif-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+        .notif-card-title { font-weight: 800; font-size: 1rem; margin: 0; }
+        .notif-card-time { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+        .notif-card-message { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin: 0; white-space: pre-line; }
+        .notif-card-actions { margin-top: 12px; }
+        .notif-card-actions button {
+            padding: 6px 14px; border: 1px solid var(--line); border-radius: 10px;
+            background: var(--white); cursor: pointer; font-size: 0.82rem; font-weight: 700;
+        }
+        .notif-card-actions button:hover { border-color: var(--green); background: var(--green-soft); }
+        .notif-empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+        .notif-empty p { margin: 0; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/" class="nav-badge">Dashboard{% if total_unread %}<span class="nav-badge-count">{{ total_unread }}</span>{% endif %}</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="notif-page">
+            <div class="notif-header">
+                <h1>&#128276; Notifications</h1>
+            </div>
+
+            {% if messages %}
+            <div style="margin-bottom: 16px;">
+                {% for msg in messages %}
+                <div style="padding:14px 18px; border-radius:14px; font-weight:700; font-size:0.92rem; margin-bottom:8px;"
+                     class="{% if msg.tags == 'success' %}msg success{% elif msg.tags == 'error' %}msg error{% endif %}"
+                     style="{% if msg.tags == 'success' %}border:1px solid #b8e0c8; background:#e7f5ed; color:#064f2a;{% elif msg.tags == 'error' %}border:1px solid #f0b8b8; background:#fff1f1; color:#9f1d1d;{% endif %}">
+                    {{ msg }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if notifications %}
+                {% for notif in notifications %}
+                <div class="notif-card {% if not notif.is_read %}unread{% endif %}">
+                    <div class="notif-card-header">
+                        <h3 class="notif-card-title">{{ notif.title }}</h3>
+                        <span class="notif-card-time">{{ notif.created_at|timesince }} ago</span>
+                    </div>
+                    <p class="notif-card-message">{{ notif.message }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="notif-empty">
+                    <p style="font-size: 2rem; margin-bottom: 8px;">&#128276;</p>
+                    <p>No notifications yet. You'll be notified when your bookings are updated.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/workers/">Workers</a>
+        </div>
+    </footer>
+</body>
+</html>

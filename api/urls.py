@@ -1,7 +1,63 @@
 from django.urls import path
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from api.views import auth, workers, jobs, bookings, chat, reviews, notifications, favorites
 
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def api_root(request):
+    return Response({
+        'auth': {
+            'register': '/api/auth/register/',
+            'login': '/api/auth/login/',
+            'logout': '/api/auth/logout/',
+            'profile': '/api/auth/profile/',
+        },
+        'workers': {
+            'list': '/api/workers/',
+            'detail': '/api/workers/{id}/',
+            'reviews': '/api/workers/{id}/reviews/',
+        },
+        'jobs': {
+            'my_jobs': '/api/jobs/',
+            'browse': '/api/jobs/browse/',
+            'detail': '/api/jobs/{id}/',
+            'apply': '/api/jobs/{id}/apply/',
+            'status': '/api/jobs/{id}/status/',
+            'photos': '/api/jobs/{id}/photos/',
+            'accept_application': '/api/jobs/applications/{id}/accept/',
+            'reject_application': '/api/jobs/applications/{id}/reject/',
+        },
+        'bookings': {
+            'list_create': '/api/bookings/',
+            'respond': '/api/bookings/{id}/respond/',
+        },
+        'chat': {
+            'conversations': '/api/chat/',
+            'messages': '/api/chat/{worker_id}/',
+            'typing': '/api/chat/{worker_id}/typing/',
+            'mark_read': '/api/chat/{worker_id}/read/',
+        },
+        'reviews': {
+            'list_create': '/api/reviews/',
+        },
+        'notifications': {
+            'list': '/api/notifications/',
+            'mark_read': '/api/notifications/{id}/read/',
+            'mark_all_read': '/api/notifications/read-all/',
+        },
+        'favorites': {
+            'list': '/api/favorites/',
+            'toggle': '/api/favorites/{worker_id}/toggle/',
+        },
+    })
+
+
 urlpatterns = [
+    path('', api_root, name='api_root'),
+
     # Auth
     path('auth/register/', auth.register, name='api_register'),
     path('auth/login/', auth.login, name='api_login'),

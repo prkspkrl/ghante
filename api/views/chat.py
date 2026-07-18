@@ -1,8 +1,9 @@
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from django.db.models import Q, Max, Count
+from django.db.models import Q, Max
 from chat.models import ChatMessage, TypingStatus
 from chat.serializers import ChatMessageSerializer
 from profiles.models import WorkerProfile
@@ -12,10 +13,11 @@ from profiles.models import WorkerProfile
 @permission_classes([IsAuthenticated])
 def conversation_list(request):
     user = request.user
-    # Get all workers this user has chatted with
     sent_worker_ids = ChatMessage.objects.filter(sender=user).values_list('worker_id', distinct=True)
-    received_worker_ids = ChatMessage.objects.filter(worker__user=user).values_list('worker_id', distinct=True) if hasattr(user, 'worker_profile') else []
-    worker_ids = set(list(sent_worker_ids) + list(received_worker_ids))
+    received_worker_ids = []
+    if hasattr(user, 'worker_profile'):
+        received_worker_ids = list(ChatMessage.objects.filter(worker=user.worker_profile).values_list('worker_id', distinct=True))
+    worker_ids = set(list(sent_worker_ids) + received_worker_ids)
 
     conversations = []
     for worker_id in worker_ids:
@@ -56,7 +58,6 @@ def chat_messages(request, worker_id):
         serializer = ChatMessageSerializer(messages, many=True, context={'request': request})
         return Response(serializer.data)
 
-    # POST - send message
     message_text = request.data.get('message', '')
     message_type = request.data.get('message_type', 'text')
     image = request.FILES.get('image')
@@ -83,10 +84,33 @@ def update_typing(request, worker_id):
         return Response({'error': 'Worker not found'}, status=status.HTTP_404_NOT_FOUND)
 
     is_typing = request.data.get('is_typing', False)
-    status_obj, _ = TypingStatus.objects.get_or_create(user=request.user, worker=worker)
-    status_obj.is_typing = is_typing
-    status_obj.save()
+    obj, _ = TypingStatus.objects.get_or_create(user=request.user, worker=worker)
+    obj.is_typing = is_typing
+    obj.save()
     return Response({'message': 'Typing status updated'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def typing_status(request, worker_id):
+    worker = WorkerProfile.objects.filter(pk=worker_id).first()
+    if not worker:
+        return Response({'error': 'Worker not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    threshold = timezone.now() - timezone.timedelta(seconds=10)
+    typing_users = TypingStatus.objects.filter(
+        worker=worker, is_typing=True, updated_at__gte=threshold,
+    ).exclude(user=request.user).select_related('user')
+
+    users = [
+        {
+            'user_id': t.user.id,
+            'username': t.user.username,
+            'name': t.user.profile.full_name if hasattr(t.user, 'profile') else t.user.username,
+        }
+        for t in typing_users
+    ]
+    return Response({'typing_users': users})
 
 
 @api_view(['POST'])

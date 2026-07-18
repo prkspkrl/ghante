@@ -1,11 +1,26 @@
 import math
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from jobs.models import Job, JobApplication, JobPhoto
 from jobs.serializers import JobSerializer, JobListSerializer, JobApplicationSerializer, JobPhotoSerializer
-from api.permissions import IsCustomer, IsOwnerOrReadOnly
+from api.permissions import IsOwnerOrReadOnly
+
+ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg']
+MAX_IMAGE_SIZE = 5 * 1024 * 1024
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (math.sin(d_lat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(d_lon / 2) ** 2)
+    return R * 2 * math.asin(math.sqrt(a))
 
 
 class JobListCreateView(generics.ListCreateAPIView):
@@ -109,6 +124,7 @@ def update_job_status(request, pk):
 
     new_status = request.data.get('status')
     valid_transitions = {
+        'draft': ['open'],
         'open': ['cancelled'],
         'assigned': ['in_progress', 'cancelled'],
         'in_progress': ['completed', 'cancelled'],
@@ -118,7 +134,18 @@ def update_job_status(request, pk):
         return Response({'error': f'Cannot transition from {job.status} to {new_status}'}, status=status.HTTP_400_BAD_REQUEST)
 
     job.status = new_status
+    if new_status == 'in_progress' and not job.started_at:
+        job.started_at = timezone.now()
     job.save()
+
+    # Notify when publishing
+    if new_status == 'open':
+        try:
+            from notifications.services import notify_new_job
+            notify_new_job(job)
+        except Exception:
+            pass
+
     return Response({'message': f'Status updated to {new_status}'})
 
 
@@ -160,23 +187,22 @@ class JobBrowseView(generics.ListAPIView):
         return qs
 
 
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371
-    d_lat = math.radians(lat2 - lat1)
-    d_lon = math.radians(lon2 - lon1)
-    a = (math.sin(d_lat / 2) ** 2 +
-         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-         math.sin(d_lon / 2) ** 2)
-    return R * 2 * math.asin(math.sqrt(a))
-
-
 class JobPhotoUploadView(generics.CreateAPIView):
     serializer_class = JobPhotoSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
         job = Job.objects.filter(pk=self.kwargs['pk'], customer=self.request.user).first()
         if not job:
             from rest_framework.exceptions import NotFound
             raise NotFound
+        image = self.request.FILES.get('image')
+        if image:
+            if image.content_type not in ALLOWED_IMAGE_TYPES:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError('Image must be JPG or PNG')
+            if image.size > MAX_IMAGE_SIZE:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError('Image must be under 5MB')
         serializer.save(job=job)

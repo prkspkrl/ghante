@@ -64,6 +64,8 @@ class WorkerProfile(models.Model):
     bio = models.TextField(blank=True, default='')
     hourly_rate = models.PositiveIntegerField(default=0)
     location = models.CharField(max_length=120, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     category = models.CharField(max_length=40, choices=CATEGORY_CHOICES, default='other')
     languages = models.CharField(max_length=200, blank=True, default='', help_text='Comma-separated, e.g. English, Nepali, Hindi')
     experience = models.CharField(max_length=20, choices=EXPERIENCE_CHOICES, blank=True, default='')
@@ -79,3 +81,16 @@ class WorkerProfile(models.Model):
 
     def __str__(self):
         return f'{self.name} - {self.skill}'
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    worker = models.ForeignKey(WorkerProfile, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'worker')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user.username} favorited {self.worker.name}'

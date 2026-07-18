@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Conversations | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
     <style>
         .inbox-page { max-width: 700px; margin: 0 auto; padding: 40px 16px 80px; }
@@ -48,11 +49,11 @@
             <span class="menu-toggle-bar"></span>
         </button>
         <nav class="nav" aria-label="Main navigation">
-            <a href="/">Home</a>
-            <a href="/workers/">Workers</a>
+            <a href="/">Home</a><a href="/jobs/">Jobs</a><a href="/workers/">Workers</a>
         </nav>
         <div class="header-actions">
             {% if request.user.is_authenticated %}
+                <a href="{% url 'customer_inbox' %}" class="nav-badge">Inbox</a>
                 <a href="/accounts/dashboard/" class="nav-badge">Dashboard{% if total_unread %}<span class="nav-badge-count">{{ total_unread }}</span>{% endif %}</a>
                 <form method="post" action="/accounts/logout/" class="header-logout">
                     {% csrf_token %}
@@ -82,7 +83,7 @@
                     <div class="inbox-content">
                         <div class="inbox-name">{{ conv.worker.name }}</div>
                         <div class="inbox-skill">{{ conv.worker.skill }}</div>
-                        <div class="inbox-last">{{ conv.last_message }}</div>
+                        <div class="inbox-last">{% if conv.last_message_type == 'image' %}&#128247; Image{% else %}{{ conv.last_message }}{% endif %}</div>
                     </div>
                     <div class="inbox-meta">
                         <div class="inbox-time">{{ conv.last_time|timesince }} ago</div>

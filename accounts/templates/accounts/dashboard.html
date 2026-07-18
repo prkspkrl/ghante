@@ -5,451 +5,456 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard | Ghantey</title>
-    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=6">
     <style>
-        .dash-layout {
-            display: grid;
-            gap: 24px;
-            width: min(960px, 100%);
-            margin: 0 auto;
-            padding: 40px 16px 60px;
-        }
+        * { box-sizing: border-box; }
+        body { background: #f5f7fa; margin: 0; }
+        .dash { display: flex; min-height: 100vh; }
 
-        .dash-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
+        /* ── Sidebar ─────────────────────────── */
+        .side { width: 260px; background: #0f3d25; color: white; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; display: flex; flex-direction: column; z-index: 200; }
+        .side-brand { padding: 22px 24px; font-size: 1.3rem; font-weight: 800; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .side-brand span { color: #81c784; }
+        .side-nav { flex: 1; padding: 16px 0; }
+        .side-section { padding: 18px 24px 6px; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.3); font-weight: 700; }
+        .side-item { display: flex; align-items: center; gap: 12px; padding: 9px 24px; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: all 0.15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+        .side-item:hover { background: rgba(255,255,255,0.07); color: white; }
+        .side-item.active { background: rgba(255,255,255,0.1); color: white; border-right: 3px solid #81c784; }
+        .side-item .icon { width: 20px; text-align: center; font-size: 1rem; flex-shrink: 0; }
+        .side-item .badge { margin-left: auto; background: #c62828; color: white; font-size: 0.7rem; padding: 2px 7px; border-radius: 999px; font-weight: 700; }
+        .side-user { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 12px; }
+        .side-user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #81c784; color: #0f3d25; display: grid; place-items: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+        .side-user-info { flex: 1; min-width: 0; }
+        .side-user-name { font-size: 0.85rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .side-user-role { font-size: 0.72rem; color: rgba(255,255,255,0.5); }
 
-        .dash-brand {
-            color: var(--green);
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-        }
+        /* ── Main ────────────────────────────── */
+        .main { flex: 1; margin-left: 260px; }
+        .topbar { background: white; border-bottom: 1px solid #e8ecf0; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .topbar h1 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+        .topbar-actions { display: flex; gap: 10px; }
+        .topbar-actions a { font-size: 0.85rem; color: var(--muted); text-decoration: none; padding: 6px 14px; border-radius: 8px; transition: all 0.15s; }
+        .topbar-actions a:hover { background: #f0f2f5; color: var(--ink); }
+        .content { padding: 28px 32px; max-width: 1000px; }
 
-        .dash-top-actions {
-            display: flex;
-            gap: 10px;
-        }
+        /* ── Cards ────────────────────────────── */
+        .card { background: white; border: 1px solid #e8ecf0; border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .card-header h2 { margin: 0; font-size: 1rem; font-weight: 800; }
+        .card-header a { font-size: 0.82rem; color: var(--green); text-decoration: none; font-weight: 700; }
+        .card-header a:hover { text-decoration: underline; }
 
-        .dash-top-actions a,
-        .dash-top-actions button {
-            padding: 10px 18px;
-            border: 1px solid var(--green);
-            border-radius: 999px;
-            background: transparent;
-            color: var(--green);
-            font-weight: 800;
-            font-size: 0.88rem;
-            cursor: pointer;
-            text-decoration: none;
-        }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .stat { padding: 18px; border: 1px solid #e8ecf0; border-radius: 14px; background: white; }
+        .stat-label { font-size: 0.75rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+        .stat-value { font-size: 1.4rem; font-weight: 800; }
+        .stat-value.green { color: #2e7d32; }
+        .stat-value.orange { color: #e65100; }
+        .stat-value.red { color: #c62828; }
 
-        .dash-top-actions a:hover,
-        .dash-top-actions button:hover {
-            background: var(--green);
-            color: var(--white);
+        /* ── Action Grid ──────────────────────── */
+        .action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .action-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 18px; border: 1px solid #e8ecf0; border-radius: 14px;
+            background: white; text-decoration: none; color: var(--ink);
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
+        .action-card:hover { border-color: var(--green); box-shadow: 0 4px 16px rgba(15,123,69,0.08); }
+        .action-icon { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 1.15rem; flex-shrink: 0; }
+        .action-icon.green { background: #e8f5e9; }
+        .action-icon.blue { background: #e3f2fd; }
+        .action-icon.orange { background: #fff3e0; }
+        .action-icon.purple { background: #f3e5f5; }
+        .action-icon.red { background: #ffebee; }
+        .action-text { flex: 1; min-width: 0; }
+        .action-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 1px; }
+        .action-desc { font-size: 0.78rem; color: var(--muted); }
 
-        .dash-welcome {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 20px;
-            align-items: center;
-            padding: 32px;
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            background: var(--white);
-            box-shadow: 0 12px 40px rgba(23, 50, 38, 0.06);
-        }
+        /* ── Table ────────────────────────────── */
+        .tbl { width: 100%; border-collapse: collapse; }
+        .tbl th { text-align: left; padding: 8px 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); border-bottom: 2px solid #e8ecf0; }
+        .tbl td { padding: 10px 12px; border-bottom: 1px solid #f0f2f5; font-size: 0.88rem; }
+        .tbl tr:hover td { background: #fafbfc; }
+        .tbl a { color: var(--green); text-decoration: none; font-weight: 600; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.73rem; font-weight: 700; }
+        .badge-green { background: #e8f5e9; color: #2e7d32; }
+        .badge-orange { background: #fff3e0; color: #e65100; }
+        .badge-red { background: #ffebee; color: #c62828; }
+        .badge-blue { background: #e3f2fd; color: #1565c0; }
+        .badge-gray { background: #f5f5f5; color: #616161; }
 
-        .dash-avatar {
-            display: grid;
-            place-items: center;
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: var(--green-soft);
-            color: var(--green);
-            font-size: 1.6rem;
-            font-weight: 800;
-        }
+        .empty { text-align: center; padding: 32px; color: var(--muted); }
+        .section { display: none; }
+        .section.active { display: block; }
 
-        .dash-welcome-text h1 {
-            margin: 0 0 4px;
-            font-size: 1.6rem;
-            letter-spacing: -0.03em;
-        }
+        /* ── Messages ─────────────────────────── */
+        .msg-list { display: flex; flex-direction: column; gap: 8px; }
+        .msg-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid #e8ecf0; border-radius: 12px; text-decoration: none; color: var(--ink); transition: border-color 0.15s; }
+        .msg-item:hover { border-color: var(--green); }
+        .msg-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e8f5e9; color: #2e7d32; display: grid; place-items: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; overflow: hidden; }
+        .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .msg-body { flex: 1; min-width: 0; }
+        .msg-name { font-weight: 700; font-size: 0.9rem; }
+        .msg-preview { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .msg-time { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+        .msg-unread { background: #e8f5e9; border-color: #c8e6c9; }
 
-        .dash-welcome-text p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 0.95rem;
-        }
+        /* ── Welcome Banner ───────────────────── */
+        .welcome { display: flex; align-items: center; gap: 18px; padding: 24px 28px; border-radius: 18px; background: linear-gradient(135deg, #0f3d25 0%, #1a5c38 100%); color: white; margin-bottom: 20px; }
+        .welcome-avatar { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.15); display: grid; place-items: center; font-size: 1.3rem; font-weight: 800; flex-shrink: 0; }
+        .welcome h1 { margin: 0 0 2px; font-size: 1.3rem; }
+        .welcome p { margin: 0; opacity: 0.7; font-size: 0.9rem; }
 
-        .dash-status-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .dash-status-card {
-            padding: 22px;
-            border: 1px solid var(--line);
-            border-radius: 20px;
-            background: var(--white);
-        }
-
-        .dash-status-card .label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--muted);
-            font-size: 0.82rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .dash-status-card .value {
-            font-size: 1.05rem;
-            font-weight: 800;
-        }
-
-        .dash-status-card .value.verified {
-            color: #0f7b45;
-        }
-
-        .dash-status-card .value.unverified {
-            color: #c93131;
-        }
-
-        .dash-section-title {
-            margin: 8px 0 0;
-            font-size: 0.82rem;
-            font-weight: 800;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .dash-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .dash-action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-height: 54px;
-            padding: 0 20px;
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            background: var(--white);
-            color: var(--ink);
-            font-weight: 800;
-            font-size: 0.92rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: border-color 0.15s, background 0.15s, color 0.15s;
-        }
-
-        .dash-action-btn:hover {
-            border-color: var(--green);
-            background: var(--green-soft);
-            color: var(--green-dark);
-        }
-
-        .dash-action-btn.primary {
-            background: var(--green);
-            border-color: var(--green);
-            color: var(--white);
-        }
-
-        .dash-action-btn.primary:hover {
-            background: var(--green-dark);
-            border-color: var(--green-dark);
-        }
-
-        .dash-action-btn.danger {
-            border-color: #f0b8b8;
-            color: #9f1d1d;
-        }
-
-        .dash-action-btn.danger:hover {
-            background: #fff1f1;
-            border-color: #c93131;
-        }
-
-        .dash-action-btn .icon {
-            font-size: 1.1rem;
-        }
-
-        .dash-messages {
-            display: grid;
-            gap: 8px;
-        }
-
-        .dash-msg {
-            padding: 14px 18px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 0.92rem;
-        }
-
-        .dash-msg.success {
-            border: 1px solid #b8e0c8;
-            background: #e7f5ed;
-            color: #064f2a;
-        }
-
-        .dash-msg.error {
-            border: 1px solid #f0b8b8;
-            background: #fff1f1;
-            color: #9f1d1d;
-        }
-
-        .dash-logout-form {
-            grid-column: 1 / -1;
-        }
-
-        .dash-logout-btn {
-            width: 100%;
-            min-height: 54px;
-            border: 1px solid #f0b8b8;
-            border-radius: 16px;
-            background: var(--white);
-            color: #9f1d1d;
-            font-weight: 800;
-            font-size: 0.92rem;
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
-        }
-
-        .dash-logout-btn:hover {
-            background: #fff1f1;
-            border-color: #c93131;
-        }
-
-        .dash-unread-banner {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 20px 24px;
-            border: 2px solid var(--green);
-            border-radius: 20px;
-            background: linear-gradient(135deg, var(--green-soft) 0%, #d5f5e6 100%);
-            cursor: pointer;
-            transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .dash-unread-banner:hover {
-            box-shadow: 0 8px 28px rgba(15,123,69,0.2);
-            transform: translateY(-2px);
-        }
-        .dash-unread-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: var(--green);
-            color: var(--white);
-            display: grid;
-            place-items: center;
-            font-size: 1.4rem;
-            flex-shrink: 0;
-        }
-        .dash-unread-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .dash-unread-info strong {
-            display: block;
-            font-size: 1rem;
-            color: var(--green-dark);
-            margin-bottom: 2px;
-        }
-        .dash-unread-info span {
-            font-size: 0.85rem;
-            color: var(--muted);
-        }
-        .dash-unread-arrow {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--green);
-        }
-
-        @media (max-width: 640px) {
-            .dash-layout {
-                padding: 24px 14px 48px;
-            }
-
-            .dash-welcome {
-                grid-template-columns: 1fr;
-                justify-items: center;
-                text-align: center;
-                padding: 24px 18px;
-            }
-
-            .dash-status-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .dash-actions {
-                grid-template-columns: 1fr;
-            }
+        /* ── Mobile ───────────────────────────── */
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+        .menu-toggle span { display: block; width: 22px; height: 2px; background: var(--ink); margin: 5px 0; border-radius: 2px; }
+        @media (max-width: 768px) {
+            .side { transform: translateX(-100%); transition: transform 0.3s; }
+            .side.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .menu-toggle { display: block; }
+            .content { padding: 16px; }
+            .action-grid { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
-    <main class="dash-layout">
-        <div class="dash-top">
-            <a class="dash-brand" href="/">Ghantey</a>
-            <div class="dash-top-actions">
+<div class="dash">
+    <aside class="side" id="sidebar">
+        <a class="side-brand" href="/">G<span>hantey</span></a>
+        <nav class="side-nav">
+            <div class="side-section">Overview</div>
+            <button class="side-item active" data-section="home">
+                <span class="icon">&#127968;</span> Dashboard
+            </button>
+
+            <div class="side-section">Customer</div>
+            <a class="side-item" href="/jobs/create/" data-section="post-job">
+                <span class="icon">&#128188;</span> Post Job
+            </a>
+            <button class="side-item" data-section="my-jobs">
+                <span class="icon">&#128196;</span> My Jobs
+                {% if customer_stats.active %}<span class="badge">{{ customer_stats.active }}</span>{% endif %}
+            </button>
+            <button class="side-item" data-section="bookings">
+                <span class="icon">&#128197;</span> Bookings
+            </button>
+            <a class="side-item" href="/workers/" data-section="find-workers">
+                <span class="icon">&#128101;</span> Find Workers
+            </a>
+
+            {% if worker_profile %}
+            <div class="side-section">Worker</div>
+            <a class="side-item" href="/workers/{{ worker_profile.pk }}/">
+                <span class="icon">&#128100;</span> My Profile
+            </a>
+            <button class="side-item" data-section="manage-bookings">
+                <span class="icon">&#128197;</span> Manage Bookings
+                {% if pending_bookings %}<span class="badge">{{ pending_bookings }}</span>{% endif %}
+            </button>
+            <a class="side-item" href="/workers/{{ worker_profile.pk }}/edit/">
+                <span class="icon">&#9998;</span> Edit Profile
+            </a>
+            <button class="side-item" data-section="worker-reviews">
+                <span class="icon">&#11088;</span> Reviews
+            </button>
+            {% endif %}
+
+            <div class="side-section">Communication</div>
+            <a class="side-item" href="{% if worker_profile %}{% url 'worker_inbox' %}{% else %}{% url 'customer_inbox' %}{% endif %}">
+                <span class="icon">&#128172;</span> Messages
+                {% if unread_messages %}<span class="badge">{{ unread_messages }}</span>{% endif %}
+            </a>
+            <a class="side-item" href="{% url 'notification_list' %}">
+                <span class="icon">&#128276;</span> Notifications
+                {% if unread_notifications %}<span class="badge">{{ unread_notifications }}</span>{% endif %}
+            </a>
+
+            <div class="side-section">Account</div>
+            <button class="side-item" data-section="profile">
+                <span class="icon">&#128100;</span> Profile
+            </button>
+            <button class="side-item" data-section="settings">
+                <span class="icon">&#9881;</span> Settings
+            </button>
+            <a class="side-item" href="/accounts/password-reset/">
+                <span class="icon">&#128275;</span> Password
+            </a>
+
+            {% if request.user.is_staff %}
+            <div class="side-section">Admin</div>
+            <a class="side-item" href="{% url 'admin_dashboard' %}">
+                <span class="icon">&#127968;</span> Admin Panel
+            </a>
+            <a class="side-item" href="/search-analytics/">
+                <span class="icon">&#128202;</span> Analytics
+            </a>
+            {% endif %}
+        </nav>
+        <div class="side-user">
+            <div class="side-user-avatar">{{ request.user.username|first|upper }}</div>
+            <div class="side-user-info">
+                <div class="side-user-name">{{ request.user.profile.full_name|default:request.user.username }}</div>
+                <div class="side-user-role">{{ request.user.profile.get_role_display }}</div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                    <span></span><span></span><span></span>
+                </button>
+                <h1 id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="topbar-actions">
                 <a href="/">Home</a>
+                <form method="post" action="/accounts/logout/" style="margin:0;">{% csrf_token %}<button type="submit" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.85rem; font-weight:600;">Logout</button></form>
             </div>
         </div>
 
-        {% if messages %}
-            <div class="dash-messages">
+        <div class="content">
+            {% if messages %}
+            <div style="margin-bottom: 16px;">
                 {% for msg in messages %}
-                    <div class="dash-msg {{ msg.tags }}">{{ msg }}</div>
+                <div class="msg {{ msg.tags }}" style="padding:12px 16px; border-radius:10px; font-weight:600; font-size:0.9rem; margin-bottom:6px;">{{ msg }}</div>
                 {% endfor %}
             </div>
-        {% endif %}
+            {% endif %}
 
-        <div class="dash-welcome">
-            <div class="dash-avatar">{{ request.user.username|first|upper }}</div>
-            <div class="dash-welcome-text">
-                <h1>Welcome, {{ request.user.profile.full_name|default:request.user.username }}</h1>
-                <p>{{ request.user.profile.get_role_display }} account &middot; {{ request.user.email }}</p>
-            </div>
-        </div>
+            <!-- ═══ HOME ═══ -->
+            <div class="section active" id="sec-home">
+                <div class="welcome">
+                    <div class="welcome-avatar">{{ request.user.username|first|upper }}</div>
+                    <div>
+                        <h1>Welcome, {{ request.user.profile.full_name|default:request.user.username }}</h1>
+                        <p>{{ request.user.profile.get_role_display }} &middot; {{ request.user.email }}</p>
+                    </div>
+                </div>
 
-        <div class="dash-status-grid">
-            <div class="dash-status-card">
-                <span class="label">Email</span>
-                <span class="value {% if request.user.profile.email_verified %}verified{% else %}unverified{% endif %}">
-                    {% if request.user.profile.email_verified %}Verified{% else %}Not verified{% endif %}
-                </span>
-            </div>
-            <div class="dash-status-card">
-                <span class="label">Phone</span>
-                <span class="value {% if request.user.profile.phone_verified %}verified{% else %}unverified{% endif %}">
-                    {% if request.user.profile.phone_verified %}Verified{% else %}Not verified{% endif %}
-                </span>
-            </div>
-            <div class="dash-status-card">
-                <span class="label">Phone Number</span>
-                <span class="value">{{ request.user.profile.phone_number|default:"Not set" }}</span>
-            </div>
-        </div>
+                <div class="stats-row">
+                    {% if worker_profile %}
+                    <div class="stat"><div class="stat-label">My Rating</div><div class="stat-value green">{{ worker_profile.rating }}/5</div></div>
+                    <div class="stat"><div class="stat-label">Jobs Done</div><div class="stat-value">{{ worker_profile.jobs_count }}</div></div>
+                    {% endif %}
+                    <div class="stat"><div class="stat-label">Jobs Posted</div><div class="stat-value">{{ customer_stats.posted }}</div></div>
+                    <div class="stat"><div class="stat-label">Active</div><div class="stat-value orange">{{ customer_stats.active }}</div></div>
+                    <div class="stat"><div class="stat-label">Completed</div><div class="stat-value green">{{ customer_stats.completed }}</div></div>
+                    <div class="stat"><div class="stat-label">Unread</div><div class="stat-value red">{{ total_unread|default:"0" }}</div></div>
+                </div>
 
-        {% if total_unread %}
-        <div class="dash-unread-banner" onclick="window.location='{% if worker_profile %}{% url 'worker_inbox' %}{% else %}{% url 'customer_inbox' %}{% endif %}'">
-            <div class="dash-unread-icon">&#128172;</div>
-            <div class="dash-unread-info">
-                <strong>{{ total_unread }} unread message{{ total_unread|pluralize }}</strong>
-                {% if unread_conversations %}
-                <span>{% for conv in unread_conversations %}{{ conv.sender_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                <div class="card">
+                    <div class="card-header"><h2>Quick Actions</h2></div>
+                    <div class="action-grid">
+                        <a href="/jobs/create/" class="action-card">
+                            <div class="action-icon green">&#128188;</div>
+                            <div class="action-text"><div class="action-title">Post a Job</div><div class="action-desc">Find workers for your task</div></div>
+                        </a>
+                        <a href="/workers/" class="action-card">
+                            <div class="action-icon blue">&#128101;</div>
+                            <div class="action-text"><div class="action-title">Find Workers</div><div class="action-desc">Browse available workers</div></div>
+                        </a>
+                        <a href="{% if worker_profile %}{% url 'worker_inbox' %}{% else %}{% url 'customer_inbox' %}{% endif %}" class="action-card">
+                            <div class="action-icon purple">&#128172;</div>
+                            <div class="action-text"><div class="action-title">Messages</div><div class="action-desc">{% if unread_messages %}{{ unread_messages }} unread{% else %}No new messages{% endif %}</div></div>
+                        </a>
+                        <a href="{% url 'notification_list' %}" class="action-card">
+                            <div class="action-icon orange">&#128276;</div>
+                            <div class="action-text"><div class="action-title">Notifications</div><div class="action-desc">{% if unread_notifications %}{{ unread_notifications }} unread{% else %}All caught up{% endif %}</div></div>
+                        </a>
+                    </div>
+                </div>
+
+                {% if recent_applications %}
+                <div class="card">
+                    <div class="card-header"><h2>Recent Applications</h2><a href="/jobs/my-jobs/">View all</a></div>
+                    <table class="tbl">
+                        <thead><tr><th>Worker</th><th>Job</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                        {% for app in recent_applications %}
+                        <tr>
+                            <td>{{ app.worker.name }}</td>
+                            <td>{{ app.job.title|truncatewords:4 }}</td>
+                            <td><span class="badge {% if app.status == 'accepted' %}badge-green{% elif app.status == 'rejected' %}badge-red{% else %}badge-orange{% endif %}">{{ app.status }}</span></td>
+                            <td><a href="/jobs/{{ app.job.pk }}/">View</a></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% endif %}
             </div>
-            <span class="dash-unread-arrow">&rarr;</span>
-        </div>
-        {% endif %}
 
-        <p class="dash-section-title">My Activity</p>
-        <div class="dash-status-grid">
-            <div class="dash-status-card">
-                <span class="label">Jobs Posted</span>
-                <span class="value">{{ customer_stats.posted }}</span>
+            <!-- ═══ MY JOBS ═══ -->
+            <div class="section" id="sec-my-jobs">
+                <div class="card">
+                    <div class="card-header"><h2>My Job Postings</h2><a href="/jobs/create/">+ Post New Job</a></div>
+                    {% if my_jobs %}
+                    <table class="tbl">
+                        <thead><tr><th>Title</th><th>Category</th><th>Budget</th><th>Status</th><th>Created</th><th></th></tr></thead>
+                        <tbody>
+                        {% for job in my_jobs %}
+                        <tr>
+                            <td><a href="/jobs/{{ job.pk }}/">{{ job.title|truncatewords:5 }}</a></td>
+                            <td>{{ job.get_category_display }}</td>
+                            <td>Rs. {{ job.budget }}</td>
+                            <td><span class="badge {% if job.status == 'open' %}badge-green{% elif job.status == 'completed' %}badge-blue{% elif job.status == 'cancelled' %}badge-red{% else %}badge-gray{% endif %}">{{ job.status }}</span></td>
+                            <td>{{ job.created_at|timesince }} ago</td>
+                            <td><a href="/jobs/{{ job.pk }}/">View</a></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}<div class="empty">No jobs posted yet. <a href="/jobs/create/">Post your first job</a></div>{% endif %}
+                </div>
             </div>
-            <div class="dash-status-card">
-                <span class="label">Active Jobs</span>
-                <span class="value" style="color: #e65100;">{{ customer_stats.active }}</span>
+
+            <!-- ═══ BOOKINGS ═══ -->
+            <div class="section" id="sec-bookings">
+                <div class="card">
+                    <div class="card-header"><h2>My Bookings</h2></div>
+                    {% if customer_bookings %}
+                    <table class="tbl">
+                        <thead><tr><th>Worker</th><th>Date</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                        {% for b in customer_bookings %}
+                        <tr>
+                            <td>{{ b.worker.name }}</td>
+                            <td>{{ b.preferred_date }}</td>
+                            <td><span class="badge {% if b.status == 'accepted' %}badge-green{% elif b.status == 'rejected' %}badge-red{% elif b.status == 'completed' %}badge-blue{% else %}badge-orange{% endif %}">{{ b.status }}</span></td>
+                            <td><a href="/workers/{{ b.worker.pk }}/">View Worker</a></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}<div class="empty">No bookings yet.</div>{% endif %}
+                </div>
             </div>
-            <div class="dash-status-card">
-                <span class="label">Completed</span>
-                <span class="value" style="color: #2e7d32;">{{ customer_stats.completed }}</span>
+
+            <!-- ═══ MANAGE BOOKINGS (Worker) ═══ -->
+            <div class="section" id="sec-manage-bookings">
+                <div class="card">
+                    <div class="card-header"><h2>Manage Bookings</h2></div>
+                    {% if worker_bookings %}
+                    <table class="tbl">
+                        <thead><tr><th>Customer</th><th>Date</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                        {% for b in worker_bookings %}
+                        <tr>
+                            <td>{{ b.customer_name }}</td>
+                            <td>{{ b.preferred_date }}</td>
+                            <td><span class="badge {% if b.status == 'accepted' %}badge-green{% elif b.status == 'rejected' %}badge-red{% elif b.status == 'completed' %}badge-blue{% else %}badge-orange{% endif %}">{{ b.status }}</span></td>
+                            <td><a href="/workers/{{ b.worker.pk }}/bookings/">Manage</a></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}<div class="empty">No bookings to manage.</div>{% endif %}
+                </div>
             </div>
-            <div class="dash-status-card">
-                <span class="label">Cancelled</span>
-                <span class="value" style="color: #c62828;">{{ customer_stats.cancelled }}</span>
+
+            <!-- ═══ WORKER REVIEWS ═══ -->
+            <div class="section" id="sec-worker-reviews">
+                <div class="card">
+                    <div class="card-header"><h2>My Reviews</h2></div>
+                    {% if worker_reviews %}
+                    <table class="tbl">
+                        <thead><tr><th>Reviewer</th><th>Rating</th><th>Comment</th><th>Date</th></tr></thead>
+                        <tbody>
+                        {% for r in worker_reviews %}
+                        <tr>
+                            <td>{{ r.reviewer.username|default:"Anonymous" }}</td>
+                            <td>{% for i in "12345" %}{% if forloop.counter <= r.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</td>
+                            <td>{{ r.comment|truncatewords:8|default:"-" }}</td>
+                            <td>{{ r.created_at|timesince }} ago</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}<div class="empty">No reviews yet.</div>{% endif %}
+                </div>
             </div>
-        </div>
 
-        <p class="dash-section-title">Quick Links</p>
-        <div class="dash-actions">
-            <a href="{% url 'customer_inbox' %}" class="dash-action-btn">
-                <span class="icon">&#128172;</span> My Conversations{% if unread_messages %}<span class="nav-badge-count" style="margin-left:6px;">{{ unread_messages }}</span>{% endif %}
-            </a>
-            <a href="{% url 'customer_bookings' %}" class="dash-action-btn">
-                <span class="icon">&#128197;</span> My Bookings
-            </a>
-            <a href="{% url 'notification_list' %}" class="dash-action-btn">
-                <span class="icon">&#128276;</span> Notifications{% if unread_notifications %}<span class="nav-badge-count" style="margin-left:6px;">{{ unread_notifications }}</span>{% endif %}
-            </a>
-            <a href="/workers/" class="dash-action-btn primary">
-                <span class="icon">&#128188;</span> Find Workers
-            </a>
-        </div>
+            <!-- ═══ PROFILE ═══ -->
+            <div class="section" id="sec-profile">
+                <div class="card">
+                    <div class="card-header"><h2>Profile Information</h2><a href="/accounts/profile/">Edit</a></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div><div style="font-size:0.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:4px;">Full Name</div><div style="font-weight:600;">{{ request.user.profile.full_name|default:"-" }}</div></div>
+                        <div><div style="font-size:0.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:4px;">Email</div><div style="font-weight:600;">{{ request.user.email }}</div></div>
+                        <div><div style="font-size:0.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:4px;">Phone</div><div style="font-weight:600;">{{ request.user.profile.phone_number|default:"-" }}</div></div>
+                        <div><div style="font-size:0.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:4px;">Role</div><div style="font-weight:600;">{{ request.user.profile.get_role_display }}</div></div>
+                        <div><div style="font-size:0.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:4px;">Email Verified</div><div style="font-weight:600;">{% if request.user.profile.email_verified %}<span class="badge badge-green">Verified</span>{% else %}<span class="badge badge-red">Not verified</span>{% endif %}</div></div>
+                        <div><div style="font-size:0.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:4px;">Phone Verified</div><div style="font-weight:600;">{% if request.user.profile.phone_verified %}<span class="badge badge-green">Verified</span>{% else %}<span class="badge badge-red">Not verified</span>{% endif %}</div></div>
+                    </div>
+                </div>
+            </div>
 
-        <p class="dash-section-title">Worker Profile</p>
-        <div class="dash-actions">
-            {% if worker_profile %}
-                <a href="/workers/{{ worker_profile.pk }}/" class="dash-action-btn">
-                    <span class="icon">&#128100;</span> View my worker profile
-                </a>
-                <a href="/workers/{{ worker_profile.pk }}/edit/" class="dash-action-btn">
-                    <span class="icon">&#9998;</span> Edit worker profile
-                </a>
-                <a href="{% url 'worker_inbox' %}" class="dash-action-btn">
-                    <span class="icon">&#128172;</span> Worker Inbox{% if unread_messages %}<span class="nav-badge-count" style="margin-left:6px;">{{ unread_messages }}</span>{% endif %}
-                </a>
-                <a href="{% url 'worker_bookings' %}" class="dash-action-btn primary">
-                    <span class="icon">&#128197;</span> Manage Bookings{% if pending_bookings %}<span class="nav-badge-count" style="margin-left:6px;">{{ pending_bookings }}</span>{% endif %}
-                </a>
-            {% else %}
-                <a href="/workers/create/" class="dash-action-btn primary">
-                    <span class="icon">&#128188;</span> Upgrade to Worker
-                </a>
-            {% endif %}
-        </div>
+            <!-- ═══ SETTINGS ═══ -->
+            <div class="section" id="sec-settings">
+                <div class="card">
+                    <div class="card-header"><h2>Account Settings</h2></div>
+                    <div class="action-grid">
+                        <a href="/accounts/profile/" class="action-card">
+                            <div class="action-icon green">&#128100;</div>
+                            <div class="action-text"><div class="action-title">Edit Profile</div><div class="action-desc">Update your personal info</div></div>
+                        </a>
+                        <a href="/accounts/password-reset/" class="action-card">
+                            <div class="action-icon orange">&#128275;</div>
+                            <div class="action-text"><div class="action-title">Reset Password</div><div class="action-desc">Change your password</div></div>
+                        </a>
+                        <a href="{% url 'notification_list' %}" class="action-card">
+                            <div class="action-icon blue">&#128276;</div>
+                            <div class="action-text"><div class="action-title">Notifications</div><div class="action-desc">Manage notification preferences</div></div>
+                        </a>
+                        <form method="post" action="/accounts/logout/" style="margin:0;">{% csrf_token %}
+                            <button type="submit" class="action-card" style="width:100%; text-align:left;">
+                                <div class="action-icon red">&#10140;</div>
+                                <div class="action-text"><div class="action-title">Logout</div><div class="action-desc">Sign out of your account</div></div>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
-        <p class="dash-section-title">Account Settings</p>
-        <div class="dash-actions">
-            <a href="/accounts/profile/" class="dash-action-btn primary">
-                <span class="icon">&#9881;</span> Site Settings
-            </a>
-        </div>
-
-        {% if request.user.is_staff %}
-        <p class="dash-section-title">Admin</p>
-        <div class="dash-actions">
-            <a href="/search-analytics/" class="dash-action-btn primary">
-                <span class="icon">&#128202;</span> Search Analytics
-            </a>
-            <a href="/search-analytics/csv/" class="dash-action-btn">
-                <span class="icon">&#128229;</span> Download Analytics (CSV)
-            </a>
-        </div>
-        {% endif %}
-
-        <p class="dash-section-title">Security</p>
-        <div class="dash-actions">
-            <a href="/accounts/password-reset/" class="dash-action-btn">
-                <span class="icon">&#128275;</span> Reset Password
-            </a>
-            <form method="post" action="/accounts/logout/" class="dash-logout-form">
-                {% csrf_token %}
-                <button type="submit" class="dash-logout-btn">
-                    &#10140; Logout
-                </button>
-            </form>
         </div>
     </main>
+</div>
+
+<script>
+(function() {
+    const items = document.querySelectorAll('.side-item[data-section]');
+    const sections = document.querySelectorAll('.section');
+    const title = document.getElementById('pageTitle');
+    const titles = {
+        'home': 'Dashboard',
+        'my-jobs': 'My Jobs',
+        'bookings': 'My Bookings',
+        'manage-bookings': 'Manage Bookings',
+        'worker-reviews': 'My Reviews',
+        'profile': 'Profile',
+        'settings': 'Settings',
+    };
+
+    items.forEach(item => {
+        item.addEventListener('click', function(e) {
+            const sec = this.dataset.section;
+            if (!sec || this.getAttribute('href')) return;
+            e.preventDefault();
+            items.forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            sections.forEach(s => s.classList.remove('active'));
+            const target = document.getElementById('sec-' + sec);
+            if (target) target.classList.add('active');
+            title.textContent = titles[sec] || 'Dashboard';
+            document.getElementById('sidebar').classList.remove('open');
+        });
+    });
+})();
+</script>
 </body>
 </html>

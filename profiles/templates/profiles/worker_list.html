@@ -4,8 +4,225 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Available Workers | Ghantey</title>
+    <title>Browse Workers | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .browse-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 28px;
+            margin-bottom: 60px;
+        }
+        .filter-sidebar {
+            position: sticky;
+            top: 20px;
+            align-self: start;
+        }
+        .filter-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+            background: var(--white);
+        }
+        .filter-card h3 {
+            margin: 0 0 16px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-group {
+            margin-bottom: 18px;
+        }
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font: inherit;
+            font-size: 0.9rem;
+            outline-color: var(--green);
+            transition: border-color 0.2s;
+        }
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: var(--green);
+        }
+        .filter-budget-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .filter-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--green) 0%, #0a9a53 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+            margin-top: 16px;
+        }
+        .filter-btn:hover {
+            box-shadow: 0 4px 16px rgba(15, 123, 69, 0.3);
+        }
+        .filter-clear {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: underline;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+        }
+        .browse-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .browse-results {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .search-bar form {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            font: inherit;
+            font-size: 1rem;
+            outline-color: var(--green);
+        }
+        .search-bar input:focus {
+            border-color: var(--green);
+        }
+        .search-bar button {
+            padding: 12px 24px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--green);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--green-soft);
+            color: var(--green-dark);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .filter-tag a {
+            color: var(--green-dark);
+            text-decoration: none;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .worker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .no-results p {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+        .fav-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 2;
+        }
+        .fav-btn button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.4rem;
+            padding: 4px;
+            line-height: 1;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+        }
+        @media (max-width: 900px) {
+            .browse-layout {
+                grid-template-columns: 1fr;
+            }
+            .filter-sidebar {
+                position: static;
+            }
+            .filter-card {
+                display: none;
+            }
+            .filter-card.active {
+                display: block;
+            }
+        }
+        .mobile-filter-toggle {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--white);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 900px) {
+            .mobile-filter-toggle {
+                display: inline-flex;
+            }
+        }
+    </style>
 </head>
 <body>
     <header class="site-header">
@@ -17,13 +234,14 @@
         </button>
         <nav class="nav" aria-label="Main navigation">
             <a href="/">Home</a>
-            <a href="/services/">Services</a>
-            <a href="/popular-projects/">Projects</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/workers/">Workers</a>
             <a href="/how-it-works/">How it works</a>
         </nav>
         <div class="header-actions">
             {% if request.user.is_authenticated %}
-                <a href="/accounts/dashboard/" class="nav-badge">Profile{% if total_unread %}<span class="nav-badge-count">{{ total_unread }}</span>{% endif %}</a>
+                <a href="/workers/favorites/" class="nav-badge">&#10084;&#65039; Favorites</a>
+                <a href="/accounts/dashboard/" class="nav-badge">Profile</a>
                 <form method="post" action="/accounts/logout/" class="header-logout">
                     {% csrf_token %}
                     <button type="submit">Logout</button>
@@ -37,49 +255,185 @@
     <main>
         <div class="page-hero">
             <p class="eyebrow">Workforce</p>
-            <h1>Available workers</h1>
-            <p>Browse skilled workers ready to help with your tasks. Compare rates, ratings, and availability to find the perfect match.</p>
+            <h1>Browse Workers</h1>
+            <p>Find skilled workers ready to help. Filter by skill, rate, experience, and distance.</p>
         </div>
-        <div class="page-section">
-            {% if workers %}
-            <div class="worker-grid">
-                {% for w in workers %}
-                <a href="/workers/{{ w.pk }}/" class="worker-profile-card">
-                    <div class="worker-card-cover"></div>
-                    <div class="worker-card-photo">
-                        {% if w.photo %}
-                        <img src="{{ w.photo.url }}" alt="{{ w.name }}" loading="lazy">
-                        {% else %}
-                        <img src="https://i.pravatar.cc/150?img={{ w.pk }}" alt="{{ w.name }}" loading="lazy">
+
+        <div class="search-bar">
+            <form method="get" action="/workers/">
+                <input type="text" name="q" value="{{ query }}" placeholder="Search workers by name, skill, or location...">
+                <button type="submit">&#128269; Search</button>
+            </form>
+        </div>
+
+        <button class="mobile-filter-toggle" onclick="document.querySelector('.filter-card').classList.toggle('active')">
+            &#9776; Filters
+        </button>
+
+        <div class="browse-layout">
+            <aside class="filter-sidebar">
+                <form method="get" action="/workers/" class="filter-card" id="filterForm">
+                    <h3>&#128293; Filters</h3>
+
+                    <div class="filter-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            {% for value, label in categories %}
+                            <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="experience">Experience</label>
+                        <select id="experience" name="experience" onchange="this.form.submit()">
+                            <option value="">Any Experience</option>
+                            {% for value, label in experience_choices %}
+                            <option value="{{ value }}" {% if selected_experience == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="availability">Availability</label>
+                        <select id="availability" name="availability" onchange="this.form.submit()">
+                            <option value="">Any Time</option>
+                            {% for value, label in availability_choices %}
+                            <option value="{{ value }}" {% if selected_availability == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Hourly Rate (Rs.)</label>
+                        <div class="filter-budget-row">
+                            <input type="number" name="rate_min" value="{{ rate_min }}" placeholder="Min" min="0">
+                            <input type="number" name="rate_max" value="{{ rate_max }}" placeholder="Max" min="0">
+                        </div>
+                    </div>
+
+                    {% if request.user.is_authenticated %}
+                    <div class="filter-group">
+                        <label for="distance">Distance</label>
+                        <select id="distance" name="distance" onchange="this.form.submit()">
+                            <option value="">Any Distance</option>
+                            <option value="5" {% if selected_distance == '5' %}selected{% endif %}>Within 5 km</option>
+                            <option value="10" {% if selected_distance == '10' %}selected{% endif %}>Within 10 km</option>
+                            <option value="25" {% if selected_distance == '25' %}selected{% endif %}>Within 25 km</option>
+                            <option value="50" {% if selected_distance == '50' %}selected{% endif %}>Within 50 km</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="filter-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="verified" value="1" {% if selected_verified %}checked{% endif %} onchange="this.form.submit()" style="width: auto; margin: 0;">
+                            Verified only
+                        </label>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="sort">Sort By</label>
+                        <select id="sort" name="sort" onchange="this.form.submit()">
+                            <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest</option>
+                            <option value="rating" {% if selected_sort == 'rating' %}selected{% endif %}>Top Rated</option>
+                            <option value="rate_high" {% if selected_sort == 'rate_high' %}selected{% endif %}>Rate: High to Low</option>
+                            <option value="rate_low" {% if selected_sort == 'rate_low' %}selected{% endif %}>Rate: Low to High</option>
+                            <option value="jobs" {% if selected_sort == 'jobs' %}selected{% endif %}>Most Jobs Done</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="filter-btn">Apply Filters</button>
+                    <button type="button" class="filter-clear" onclick="window.location='/workers/'">Clear all filters</button>
+                </form>
+            </aside>
+
+            <div class="browse-content">
+                {% if query or selected_category or selected_experience or selected_availability or rate_min or rate_max or selected_distance or selected_verified %}
+                <div class="active-filters">
+                    {% if query %}
+                    <span class="filter-tag">Search: {{ query }} <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}{% if selected_availability %}availability={{ selected_availability }}&{% endif %}{% if rate_min %}rate_min={{ rate_min }}&{% endif %}{% if rate_max %}rate_max={{ rate_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if selected_category %}
+                    <span class="filter-tag">Category: {{ selected_category }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}{% if selected_availability %}availability={{ selected_availability }}&{% endif %}{% if rate_min %}rate_min={{ rate_min }}&{% endif %}{% if rate_max %}rate_max={{ rate_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if selected_experience %}
+                    <span class="filter-tag">Exp: {{ selected_experience }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_availability %}availability={{ selected_availability }}&{% endif %}{% if rate_min %}rate_min={{ rate_min }}&{% endif %}{% if rate_max %}rate_max={{ rate_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if selected_availability %}
+                    <span class="filter-tag">Avail: {{ selected_availability }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}{% if rate_min %}rate_min={{ rate_min }}&{% endif %}{% if rate_max %}rate_max={{ rate_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if rate_min %}
+                    <span class="filter-tag">Min Rate: Rs. {{ rate_min }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}{% if selected_availability %}availability={{ selected_availability }}&{% endif %}{% if rate_max %}rate_max={{ rate_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if rate_max %}
+                    <span class="filter-tag">Max Rate: Rs. {{ rate_max }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}{% if selected_availability %}availability={{ selected_availability }}&{% endif %}{% if rate_min %}rate_min={{ rate_min }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if selected_distance %}
+                    <span class="filter-tag">Within {{ selected_distance }} km <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}{% if selected_availability %}availability={{ selected_availability }}&{% endif %}{% if rate_min %}rate_min={{ rate_min }}&{% endif %}{% if rate_max %}rate_max={{ rate_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if selected_verified %}
+                    <span class="filter-tag">Verified only <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}{% if selected_availability %}availability={{ selected_availability }}&{% endif %}{% if rate_min %}rate_min={{ rate_min }}&{% endif %}{% if rate_max %}rate_max={{ rate_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="browse-header">
+                    <span class="browse-results">{{ workers|length }} worker{{ workers|length|pluralize }} found</span>
+                </div>
+
+                {% if workers %}
+                <div class="worker-grid">
+                    {% for w in workers %}
+                    <a href="/workers/{{ w.pk }}/" class="worker-profile-card">
+                        {% if request.user.is_authenticated %}
+                        <form method="post" action="/workers/{{ w.pk }}/favorite/" onclick="event.stopPropagation();" class="fav-btn">
+                            {% csrf_token %}
+                            <button type="submit" title="{% if w.pk in favorited_ids %}Remove from favorites{% else %}Add to favorites{% endif %}">
+                                {% if w.pk in favorited_ids %}&#10084;&#65039;{% else %}&#9825;{% endif %}
+                            </button>
+                        </form>
                         {% endif %}
-                    </div>
-                    <div class="worker-card-body">
-                        <h3>{{ w.name }}{% if w.is_verified %} <span style="color: var(--green); font-size: 0.8rem;">&#10003;</span>{% endif %}</h3>
-                        <div class="worker-card-tags">
-                            <span class="worker-card-tag">{{ w.skill }}</span>
+                        <div class="worker-card-cover"></div>
+                        <div class="worker-card-photo">
+                            {% if w.photo %}
+                            <img src="{{ w.photo.url }}" alt="{{ w.name }}" loading="lazy">
+                            {% else %}
+                            <img src="https://i.pravatar.cc/150?img={{ w.pk }}" alt="{{ w.name }}" loading="lazy">
+                            {% endif %}
                         </div>
-                        <div class="worker-card-rating">
-                            <span class="worker-card-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-                            <span class="worker-card-rating-num">{{ w.rating }}</span>
-                            <span class="worker-card-rating-count">({{ w.jobs_count }})</span>
+                        <div class="worker-card-body">
+                            <h3>{{ w.name }}{% if w.is_verified %} <span style="color: var(--green); font-size: 0.8rem;">&#10003;</span>{% endif %}</h3>
+                            <div class="worker-card-tags">
+                                <span class="worker-card-tag">{{ w.skill }}</span>
+                                {% if w.experience %}
+                                <span class="worker-card-tag" style="background: #e3f2fd; color: #1565c0;">{{ w.get_experience_display }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="worker-card-rating">
+                                <span class="worker-card-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                                <span class="worker-card-rating-num">{{ w.rating }}</span>
+                                <span class="worker-card-rating-count">({{ w.jobs_count }})</span>
+                            </div>
+                            <div class="worker-card-divider"></div>
+                            <div class="worker-card-rate-row">
+                                <span class="worker-card-price">Rs. {{ w.hourly_rate }} <small>/hr</small></span>
+                                <span class="worker-card-location">&#128205; {{ w.location }}</span>
+                            </div>
                         </div>
-                        <div class="worker-card-divider"></div>
-                        <div class="worker-card-rate-row">
-                            <span class="worker-card-price">Rs. {{ w.hourly_rate }} <small>/hr</small></span>
-                            <span class="worker-card-location">&#128205; {{ w.location }}</span>
-                        </div>
-                    </div>
-                    <span class="worker-card-arrow">&rarr;</span>
-                </a>
-                {% endfor %}
+                        <span class="worker-card-arrow">&rarr;</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-results">
+                    <p>&#128100;</p>
+                    <h2>No workers found</h2>
+                    <p>Try adjusting your filters or search terms.</p>
+                </div>
+                {% endif %}
             </div>
-            {% else %}
-            <div style="text-align: center; padding: 80px 20px;">
-                <p style="font-size: 3rem; margin-bottom: 16px;">&#128100;</p>
-                <h2 style="margin-bottom: 8px;">No workers listed yet</h2>
-                <p style="color: var(--muted);">Check back soon or create a worker profile to get started.</p>
-            </div>
-            {% endif %}
         </div>
     </main>
     <footer class="site-footer">

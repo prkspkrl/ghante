@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Booking, WorkerProfile
+from .models import Booking, Favorite, WorkerProfile
 
 ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg']
 MAX_SIZE = 1 * 1024 * 1024  # 1MB
@@ -22,12 +22,129 @@ def _validate_image(file, field_name):
 def worker_list(request):
     from django.db.models import Q
     WORKER_Q = Q(user__isnull=True) | Q(user__profile__is_worker=True)
-    workers = WorkerProfile.objects.filter(WORKER_Q, is_available=True).order_by('-created_at')
-    return render(request, 'profiles/worker_list.html', {'workers': workers})
+
+    q = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '')
+    experience = request.GET.get('experience', '')
+    availability = request.GET.get('availability', '')
+    rate_min = request.GET.get('rate_min', '')
+    rate_max = request.GET.get('rate_max', '')
+    distance = request.GET.get('distance', '')
+    verified = request.GET.get('verified', '')
+    sort = request.GET.get('sort', 'newest')
+
+    workers = WorkerProfile.objects.filter(WORKER_Q, is_available=True)
+
+    if q:
+        workers = workers.filter(
+            Q(name__icontains=q) |
+            Q(skill__icontains=q) |
+            Q(location__icontains=q) |
+            Q(bio__icontains=q) |
+            Q(languages__icontains=q)
+        )
+
+    if category:
+        workers = workers.filter(category=category)
+
+    if experience:
+        workers = workers.filter(experience=experience)
+
+    if availability:
+        workers = workers.filter(availability=availability)
+
+    if rate_min:
+        try:
+            workers = workers.filter(hourly_rate__gte=int(rate_min))
+        except ValueError:
+            pass
+
+    if rate_max:
+        try:
+            workers = workers.filter(hourly_rate__lte=int(rate_max))
+        except ValueError:
+            pass
+
+    if verified:
+        workers = workers.filter(is_verified=True)
+
+    if distance and request.user.is_authenticated:
+        user_lat = request.user.worker_profile.latitude if hasattr(request.user, 'worker_profile') else None
+        user_lng = request.user.worker_profile.longitude if hasattr(request.user, 'worker_profile') else None
+        if user_lat and user_lng:
+            import math
+            nearby_ids = []
+            for w in workers:
+                if w.latitude and w.longitude:
+                    R = 6371
+                    dlat = math.radians(w.latitude - user_lat)
+                    dlon = math.radians(w.longitude - user_lng)
+                    a = (math.sin(dlat / 2) ** 2 +
+                         math.cos(math.radians(user_lat)) * math.cos(math.radians(w.latitude)) *
+                         math.sin(dlon / 2) ** 2)
+                    d = R * 2 * math.asin(math.sqrt(a))
+                    if d <= float(distance):
+                        nearby_ids.append(w.id)
+            if nearby_ids:
+                workers = workers.filter(id__in=nearby_ids)
+            else:
+                workers = workers.none()
+
+    if sort == 'rating':
+        workers = workers.order_by('-rating')
+    elif sort == 'rate_high':
+        workers = workers.order_by('-hourly_rate')
+    elif sort == 'rate_low':
+        workers = workers.order_by('hourly_rate')
+    elif sort == 'jobs':
+        workers = workers.order_by('-jobs_count')
+    else:
+        workers = workers.order_by('-created_at')
+
+    favorited_ids = set()
+    if request.user.is_authenticated:
+        favorited_ids = set(
+            Favorite.objects.filter(user=request.user).values_list('worker_id', flat=True)
+        )
+
+    return render(request, 'profiles/worker_list.html', {
+        'workers': workers,
+        'favorited_ids': favorited_ids,
+        'query': q,
+        'selected_category': category,
+        'selected_experience': experience,
+        'selected_availability': availability,
+        'rate_min': rate_min,
+        'rate_max': rate_max,
+        'selected_distance': distance,
+        'selected_verified': verified,
+        'selected_sort': sort,
+        'categories': WorkerProfile.CATEGORY_CHOICES,
+        'experience_choices': WorkerProfile.EXPERIENCE_CHOICES,
+        'availability_choices': WorkerProfile.AVAILABILITY_CHOICES,
+    })
 
 
 def worker_detail(request, pk):
     worker = get_object_or_404(WorkerProfile, pk=pk, is_available=True)
+    from reviews.models import Review
+    reviews = Review.objects.filter(
+        worker=worker, review_type='customer_to_worker'
+    ).select_related('reviewer', 'job')[:5]
+
+    can_review = False
+    completed_jobs = []
+    if request.user.is_authenticated and worker.user != request.user:
+        from jobs.models import Job
+        completed_jobs = Job.objects.filter(
+            customer=request.user, status='completed'
+        ).exclude(
+            reviews__reviewer=request.user,
+            reviews__worker=worker,
+            reviews__review_type='customer_to_worker',
+        )
+        can_review = completed_jobs.exists()
+
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         email = request.POST.get('email', '').strip()
@@ -38,6 +155,11 @@ def worker_detail(request, pk):
         if not name or not email or not date or not description:
             messages.error(request, 'Please fill in all required fields.')
             return render(request, 'profiles/worker_detail.html', {'worker': worker})
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            messages.error(request, 'Please enter a valid email address.')
+            return render(request, 'profiles/worker_detail.html', {'worker': worker})
+        description = description[:2000]
+        name = name[:120]
         Booking.objects.create(
             worker=worker,
             customer_name=name,
@@ -49,7 +171,12 @@ def worker_detail(request, pk):
         )
         messages.success(request, f'Booking request sent to {worker.name}! They will respond soon.')
         return redirect('worker_detail', pk=worker.pk)
-    return render(request, 'profiles/worker_detail.html', {'worker': worker})
+    return render(request, 'profiles/worker_detail.html', {
+        'worker': worker,
+        'reviews': reviews,
+        'can_review': can_review,
+        'completed_jobs': completed_jobs,
+    })
 
 
 _FORM_CTX = {
@@ -67,6 +194,8 @@ def worker_create(request):
         bio = request.POST.get('bio', '').strip()
         hourly_rate = request.POST.get('hourly_rate', '0')
         location = request.POST.get('location', '').strip()
+        lat = request.POST.get('latitude', '')
+        lng = request.POST.get('longitude', '')
         category = request.POST.get('category', 'other')
         languages = request.POST.get('languages', '').strip()
         experience = request.POST.get('experience', '')
@@ -92,6 +221,8 @@ def worker_create(request):
                 'bio': bio,
                 'hourly_rate': int(hourly_rate) if hourly_rate.isdigit() else 0,
                 'location': location,
+                'latitude': float(lat) if lat else None,
+                'longitude': float(lng) if lng else None,
                 'category': category,
                 'languages': languages,
                 'experience': experience,
@@ -121,6 +252,12 @@ def worker_edit(request, pk):
         hr = request.POST.get('hourly_rate', str(worker.hourly_rate)).strip()
         worker.hourly_rate = int(hr) if hr.isdigit() else worker.hourly_rate
         worker.location = request.POST.get('location', worker.location).strip()
+        lat = request.POST.get('latitude', '')
+        lng = request.POST.get('longitude', '')
+        if lat:
+            worker.latitude = float(lat)
+        if lng:
+            worker.longitude = float(lng)
         worker.category = request.POST.get('category', worker.category)
         worker.languages = request.POST.get('languages', worker.languages).strip()
         worker.experience = request.POST.get('experience', worker.experience)
@@ -232,3 +369,31 @@ def cancel_booking(request, pk):
     booking.save()
     messages.success(request, 'Booking cancelled successfully.')
     return redirect('customer_bookings')
+
+
+@login_required
+def toggle_favorite(request, pk):
+    """Toggle favorite status for a worker."""
+    if request.method != 'POST':
+        return redirect('worker_list')
+
+    worker = get_object_or_404(WorkerProfile, pk=pk)
+    fav, created = Favorite.objects.get_or_create(user=request.user, worker=worker)
+    if not created:
+        fav.delete()
+        messages.success(request, f'{worker.name} removed from favorites.')
+    else:
+        messages.success(request, f'{worker.name} added to favorites!')
+
+    referer = request.META.get('HTTP_REFERER', '')
+    if referer and referer.startswith(request.build_absolute_uri('/')):
+        return redirect(referer)
+    return redirect('worker_detail', pk=pk)
+
+
+@login_required
+def favorite_workers(request):
+    """Show list of favorited workers."""
+    favs = Favorite.objects.filter(user=request.user).select_related('worker')
+    workers = [f.worker for f in favs]
+    return render(request, 'profiles/favorite_workers.html', {'workers': workers})

@@ -1,0 +1,94 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="admin-stats">
+    <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value">{{ stats.total_users }}</div></div>
+    <div class="stat-card"><div class="stat-label">Workers</div><div class="stat-value green">{{ stats.total_workers }}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Jobs</div><div class="stat-value">{{ stats.total_jobs }}</div></div>
+    <div class="stat-card"><div class="stat-label">Open Jobs</div><div class="stat-value green">{{ stats.open_jobs }}</div></div>
+    <div class="stat-card"><div class="stat-label">Completed Jobs</div><div class="stat-value green">{{ stats.completed_jobs }}</div></div>
+    <div class="stat-card"><div class="stat-label">Pending KYC</div><div class="stat-value orange">{{ stats.pending_kyc }}</div></div>
+    <div class="stat-card"><div class="stat-label">Pending Applications</div><div class="stat-value orange">{{ stats.pending_applications }}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value green">Rs. {{ stats.total_revenue|floatformat:0 }}</div></div>
+    <div class="stat-card"><div class="stat-label">New Users (30d)</div><div class="stat-value">{{ stats.new_users_30d }}</div></div>
+    <div class="stat-card"><div class="stat-label">New Jobs (30d)</div><div class="stat-value">{{ stats.new_jobs_30d }}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Reviews</div><div class="stat-value">{{ stats.total_reviews }}</div></div>
+    <div class="stat-card"><div class="stat-label">Unread Notifications</div><div class="stat-value orange">{{ stats.unread_notifications }}</div></div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>Jobs by Status</h2></div>
+        <table class="admin-table">
+            <thead><tr><th>Status</th><th>Count</th></tr></thead>
+            <tbody>
+            {% for item in jobs_by_status %}
+            <tr>
+                <td><span class="badge {% if item.status == 'open' %}badge-green{% elif item.status == 'completed' %}badge-blue{% elif item.status == 'cancelled' %}badge-red{% else %}badge-gray{% endif %}">{{ item.status }}</span></td>
+                <td><strong>{{ item.count }}</strong></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>Jobs by Category</h2></div>
+        <table class="admin-table">
+            <thead><tr><th>Category</th><th>Count</th></tr></thead>
+            <tbody>
+            {% for item in jobs_by_category %}
+            <tr><td>{{ item.category }}</td><td><strong>{{ item.count }}</strong></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px;">
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>Recent Jobs</h2><a href="{% url 'admin_jobs' %}" class="admin-btn admin-btn-sm">View All</a></div>
+        <table class="admin-table">
+            <thead><tr><th>Title</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+            {% for job in recent_jobs %}
+            <tr>
+                <td><a href="{% url 'admin_job_detail' job.pk %}">{{ job.title|truncatewords:5 }}</a></td>
+                <td><span class="badge {% if job.status == 'open' %}badge-green{% elif job.status == 'completed' %}badge-blue{% else %}badge-gray{% endif %}">{{ job.status }}</span></td>
+                <td>{{ job.created_at|timesince }} ago</td>
+            </tr>
+            {% empty %}<tr><td colspan="3" class="admin-empty">No jobs yet</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>Recent Users</h2><a href="{% url 'admin_users' %}" class="admin-btn admin-btn-sm">View All</a></div>
+        <table class="admin-table">
+            <thead><tr><th>Username</th><th>Joined</th></tr></thead>
+            <tbody>
+            {% for u in recent_users %}
+            <tr>
+                <td><a href="{% url 'admin_user_detail' u.pk %}">{{ u.username }}</a></td>
+                <td>{{ u.date_joined|timesince }} ago</td>
+            </tr>
+            {% empty %}<tr><td colspan="2" class="admin-empty">No users yet</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>Recent Reviews</h2><a href="{% url 'admin_reviews' %}" class="admin-btn admin-btn-sm">View All</a></div>
+        <table class="admin-table">
+            <thead><tr><th>Reviewer</th><th>Rating</th><th>Date</th></tr></thead>
+            <tbody>
+            {% for r in recent_reviews %}
+            <tr>
+                <td>{{ r.reviewer.username }}</td>
+                <td>{{ r.rating }}/5</td>
+                <td>{{ r.created_at|timesince }} ago</td>
+            </tr>
+            {% empty %}<tr><td colspan="3" class="admin-empty">No reviews yet</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

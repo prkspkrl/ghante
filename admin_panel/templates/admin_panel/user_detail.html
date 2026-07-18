@@ -1,0 +1,105 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}{{ user_obj.username }}{% endblock %}
+{% block page_title %}{{ user_obj.username }}{% endblock %}
+{% block content %}
+<a href="{% url 'admin_users' %}" class="admin-back">&larr; Back to Users</a>
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+    <div>
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>User Details</h2></div>
+            <div class="admin-detail-grid">
+                <div class="admin-detail-item"><div class="label">Username</div><div class="value">{{ user_obj.username }}</div></div>
+                <div class="admin-detail-item"><div class="label">Email</div><div class="value">{{ user_obj.email }}</div></div>
+                <div class="admin-detail-item"><div class="label">Full Name</div><div class="value">{{ user_obj.get_full_name|default:"-" }}</div></div>
+                <div class="admin-detail-item"><div class="label">Role</div><div class="value"><span class="badge {% if profile.role == 'admin' %}badge-purple{% elif profile.role == 'worker' %}badge-green{% else %}badge-blue{% endif %}">{{ profile.role|default:"-" }}</span></div></div>
+                <div class="admin-detail-item"><div class="label">Phone</div><div class="value">{{ profile.phone_number|default:"-" }}</div></div>
+                <div class="admin-detail-item"><div class="label">Active</div><div class="value">{% if user_obj.is_active %}<span class="badge badge-green">Yes</span>{% else %}<span class="badge badge-red">No</span>{% endif %}</div></div>
+                <div class="admin-detail-item"><div class="label">Staff</div><div class="value">{% if user_obj.is_staff %}<span class="badge badge-purple">Yes</span>{% else %}No{% endif %}</div></div>
+                <div class="admin-detail-item"><div class="label">Verified</div><div class="value">{% if profile.is_verified %}<span class="badge badge-green">Yes</span>{% else %}No{% endif %}</div></div>
+                <div class="admin-detail-item"><div class="label">Joined</div><div class="value">{{ user_obj.date_joined|date:"M d, Y" }}</div></div>
+            </div>
+        </div>
+
+        {% if worker_profile %}
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Worker Profile</h2></div>
+            <div class="admin-detail-grid">
+                <div class="admin-detail-item"><div class="label">Name</div><div class="value">{{ worker_profile.name }}</div></div>
+                <div class="admin-detail-item"><div class="label">Skill</div><div class="value">{{ worker_profile.skill }}</div></div>
+                <div class="admin-detail-item"><div class="label">Hourly Rate</div><div class="value">Rs. {{ worker_profile.hourly_rate }}</div></div>
+                <div class="admin-detail-item"><div class="label">Rating</div><div class="value">{{ worker_profile.rating }}/5</div></div>
+                <div class="admin-detail-item"><div class="label">Category</div><div class="value">{{ worker_profile.category }}</div></div>
+                <div class="admin-detail-item"><div class="label">Available</div><div class="value">{% if worker_profile.is_available %}<span class="badge badge-green">Yes</span>{% else %}<span class="badge badge-red">No</span>{% endif %}</div></div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if jobs_posted %}
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Jobs Posted</h2></div>
+            <table class="admin-table">
+                <thead><tr><th>Title</th><th>Status</th><th>Budget</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for job in jobs_posted %}
+                <tr>
+                    <td><a href="{% url 'admin_job_detail' job.pk %}">{{ job.title|truncatewords:5 }}</a></td>
+                    <td><span class="badge {% if job.status == 'open' %}badge-green{% elif job.status == 'completed' %}badge-blue{% else %}badge-gray{% endif %}">{{ job.status }}</span></td>
+                    <td>Rs. {{ job.budget }}</td>
+                    <td>{{ job.created_at|timesince }} ago</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if reviews %}
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Reviews Given</h2></div>
+            <table class="admin-table">
+                <thead><tr><th>Worker</th><th>Rating</th><th>Comment</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for r in reviews %}
+                <tr>
+                    <td>{{ r.worker.name|default:"-" }}</td>
+                    <td>{{ r.rating }}/5</td>
+                    <td>{{ r.comment|truncatewords:10 }}</td>
+                    <td>{{ r.created_at|timesince }} ago</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Actions</h2></div>
+            <form method="post" style="display: flex; flex-direction: column; gap: 10px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_active">
+                <button type="submit" class="admin-btn {% if user_obj.is_active %}admin-btn-red{% else %}admin-btn-green{% endif %}" style="width: 100%; justify-content: center;">
+                    {% if user_obj.is_active %}Deactivate User{% else %}Activate User{% endif %}
+                </button>
+            </form>
+            <form method="post" style="margin-top: 10px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_staff">
+                <button type="submit" class="admin-btn" style="width: 100%;">
+                    {% if user_obj.is_staff %}Revoke Staff{% else %}Grant Staff{% endif %}
+                </button>
+            </form>
+            {% if profile %}
+            <form method="post" style="margin-top: 10px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="verify">
+                <button type="submit" class="admin-btn {% if profile.is_verified %}admin-btn-red{% else %}admin-btn-green{% endif %}" style="width: 100%;">
+                    {% if profile.is_verified %}Revoke Verification{% else %}Approve Verification{% endif %}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

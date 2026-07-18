@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, render
 from profiles.models import WorkerProfile
 
 from .models import SearchQuery
+from jobs.models import Job
 
 
 SERVICE_INFO = {
@@ -161,9 +162,11 @@ def home(request):
         .annotate(count=Count('id'))
         .order_by('-count')
     )
+    featured_jobs = Job.objects.filter(status='open').select_related('customer').order_by('-created_at')[:6]
     return render(request, 'core/home.html', {
         'workers': workers,
         'categories': categories,
+        'featured_jobs': featured_jobs,
     })
 
 

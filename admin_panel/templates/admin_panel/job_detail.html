@@ -1,0 +1,84 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}{{ job.title }}{% endblock %}
+{% block page_title %}{{ job.title }}{% endblock %}
+{% block content %}
+<a href="{% url 'admin_jobs' %}" class="admin-back">&larr; Back to Jobs</a>
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+    <div>
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Job Details</h2></div>
+            <div class="admin-detail-grid">
+                <div class="admin-detail-item"><div class="label">Title</div><div class="value">{{ job.title }}</div></div>
+                <div class="admin-detail-item"><div class="label">Customer</div><div class="value">{{ job.customer.username|default:"-" }}</div></div>
+                <div class="admin-detail-item"><div class="label">Category</div><div class="value">{{ job.get_category_display }}</div></div>
+                <div class="admin-detail-item"><div class="label">Status</div><div class="value"><span class="badge {% if job.status == 'open' %}badge-green{% elif job.status == 'completed' %}badge-blue{% elif job.status == 'cancelled' %}badge-red{% else %}badge-gray{% endif %}">{{ job.status }}</span></div></div>
+                <div class="admin-detail-item"><div class="label">Budget</div><div class="value">Rs. {{ job.budget }}</div></div>
+                <div class="admin-detail-item"><div class="label">Hours Needed</div><div class="value">{{ job.hours_needed }}</div></div>
+                <div class="admin-detail-item"><div class="label">Preferred Date</div><div class="value">{{ job.preferred_date|default:"-" }}</div></div>
+                <div class="admin-detail-item"><div class="label">Workers Needed</div><div class="value">{{ job.workers_needed }}</div></div>
+                <div class="admin-detail-item"><div class="label">Address</div><div class="value">{{ job.address|default:"-" }}</div></div>
+                <div class="admin-detail-item"><div class="label">Created</div><div class="value">{{ job.created_at|date:"M d, Y H:i" }}</div></div>
+            </div>
+            {% if job.description %}
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f2f5;">
+                <div class="label" style="font-size:0.78rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:6px;">Description</div>
+                <p style="margin:0; line-height:1.6;">{{ job.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if photos %}
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Photos</h2></div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                {% for photo in photos %}
+                <img src="{{ photo.image.url }}" style="width: 120px; height: 90px; object-fit: cover; border-radius: 10px; border: 1px solid #e0e0e0;" alt="Job photo">
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if applications %}
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Applications ({{ applications.count }})</h2></div>
+            <table class="admin-table">
+                <thead><tr><th>Worker</th><th>Skill</th><th>Message</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>{{ app.worker.name }}</td>
+                    <td>{{ app.worker.skill }}</td>
+                    <td>{{ app.message|truncatewords:8|default:"-" }}</td>
+                    <td><span class="badge {% if app.status == 'accepted' %}badge-green{% elif app.status == 'rejected' %}badge-red{% else %}badge-gray{% endif %}">{{ app.status }}</span></td>
+                    <td>{{ app.created_at|timesince }} ago</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Actions</h2></div>
+            <form method="post" style="display: flex; flex-direction: column; gap: 10px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_status">
+                <label style="font-size: 0.82rem; font-weight: 700; color: var(--muted);">Change Status</label>
+                <select name="new_status" style="padding: 8px 14px; border: 1px solid #e0e0e0; border-radius: 10px; font: inherit;">
+                    {% for value, label in job.STATUS_CHOICES %}
+                    <option value="{{ value }}" {% if job.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="admin-btn admin-btn-green" style="width: 100%;">Update Status</button>
+            </form>
+            <form method="post" style="margin-top: 12px;" onsubmit="return confirm('Delete this job?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <button type="submit" class="admin-btn admin-btn-red" style="width: 100%;">Delete Job</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

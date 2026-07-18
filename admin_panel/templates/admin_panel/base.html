@@ -1,0 +1,186 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Admin{% endblock %} | Ghantey Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        body { background: #f5f7fa; }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .admin-sidebar {
+            width: 240px; background: #0f3d25; color: white; padding: 0;
+            position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 200;
+            display: flex; flex-direction: column;
+        }
+        .admin-sidebar-brand {
+            padding: 20px 24px; font-size: 1.3rem; font-weight: 800; color: white;
+            text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: block;
+        }
+        .admin-sidebar-brand span { color: #81c784; }
+        .admin-nav { flex: 1; padding: 12px 0; }
+        .admin-nav a {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 24px; color: rgba(255,255,255,0.7); text-decoration: none;
+            font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+        }
+        .admin-nav a:hover { background: rgba(255,255,255,0.08); color: white; }
+        .admin-nav a.active { background: rgba(255,255,255,0.12); color: white; border-right: 3px solid #81c784; }
+        .admin-nav a .nav-icon { width: 20px; text-align: center; font-size: 1rem; }
+        .admin-nav-section { padding: 8px 24px 4px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); font-weight: 700; }
+        .admin-main { flex: 1; margin-left: 240px; padding: 0; }
+        .admin-topbar {
+            background: white; border-bottom: 1px solid #e8ecf0;
+            padding: 14px 32px; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .admin-topbar h1 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+        .admin-topbar-actions { display: flex; align-items: center; gap: 12px; }
+        .admin-topbar-actions a { font-size: 0.85rem; color: var(--muted); text-decoration: none; }
+        .admin-topbar-actions a:hover { color: var(--green); }
+        .admin-content { padding: 28px 32px; }
+        .admin-back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px; }
+        .admin-back:hover { color: var(--green); }
+        .admin-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card {
+            background: white; border: 1px solid #e8ecf0; border-radius: 14px;
+            padding: 18px 20px; transition: box-shadow 0.2s;
+        }
+        .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .stat-card .stat-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+        .stat-card .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--ink); }
+        .stat-card .stat-value.green { color: var(--green); }
+        .stat-card .stat-value.orange { color: #f57c00; }
+        .stat-card .stat-value.red { color: #c62828; }
+        .admin-card {
+            background: white; border: 1px solid #e8ecf0; border-radius: 14px;
+            padding: 24px; margin-bottom: 20px;
+        }
+        .admin-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .admin-card-header h2 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th {
+            text-align: left; padding: 10px 14px; font-size: 0.78rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
+            border-bottom: 2px solid #e8ecf0;
+        }
+        .admin-table td { padding: 12px 14px; border-bottom: 1px solid #f0f2f5; font-size: 0.9rem; }
+        .admin-table tr:hover td { background: #fafbfc; }
+        .admin-table a { color: var(--green); text-decoration: none; font-weight: 600; }
+        .admin-table a:hover { text-decoration: underline; }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 999px;
+            font-size: 0.75rem; font-weight: 700; text-transform: capitalize;
+        }
+        .badge-green { background: #e8f5e9; color: #2e7d32; }
+        .badge-orange { background: #fff3e0; color: #e65100; }
+        .badge-red { background: #ffebee; color: #c62828; }
+        .badge-blue { background: #e3f2fd; color: #1565c0; }
+        .badge-gray { background: #f5f5f5; color: #616161; }
+        .badge-purple { background: #f3e5f5; color: #7b1fa2; }
+        .admin-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+        .admin-filters input, .admin-filters select {
+            padding: 8px 14px; border: 1px solid #e0e0e0; border-radius: 10px;
+            font: inherit; font-size: 0.88rem; background: white;
+        }
+        .admin-filters input:focus, .admin-filters select:focus { border-color: var(--green); outline: none; }
+        .admin-filters button {
+            padding: 8px 18px; border: 0; border-radius: 10px; background: var(--green);
+            color: white; font-weight: 700; font-size: 0.85rem; cursor: pointer;
+        }
+        .admin-btn {
+            display: inline-block; padding: 7px 16px; border: 1px solid #e0e0e0; border-radius: 10px;
+            background: white; font-weight: 700; font-size: 0.82rem; cursor: pointer;
+            text-decoration: none; color: var(--ink); transition: all 0.2s;
+        }
+        .admin-btn:hover { border-color: var(--green); background: #f0faf3; }
+        .admin-btn-green { background: var(--green); color: white; border-color: var(--green); }
+        .admin-btn-green:hover { background: #0d8a4a; }
+        .admin-btn-red { background: #c62828; color: white; border-color: #c62828; }
+        .admin-btn-red:hover { background: #b71c1c; }
+        .admin-btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+        .admin-form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .admin-form-group { display: flex; flex-direction: column; gap: 4px; }
+        .admin-form-group label { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+        .admin-form-group input, .admin-form-group textarea, .admin-form-group select {
+            padding: 8px 14px; border: 1px solid #e0e0e0; border-radius: 10px;
+            font: inherit; font-size: 0.88rem;
+        }
+        .admin-form-group textarea { min-height: 80px; resize: vertical; }
+        .admin-empty { text-align: center; padding: 40px; color: var(--muted); }
+        .admin-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .admin-detail-item { padding: 10px 0; }
+        .admin-detail-item .label { font-size: 0.78rem; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
+        .admin-detail-item .value { font-size: 0.95rem; font-weight: 600; }
+        @media (max-width: 768px) {
+            .admin-sidebar { display: none; }
+            .admin-main { margin-left: 0; }
+            .admin-content { padding: 16px; }
+            .admin-stats { grid-template-columns: 1fr 1fr; }
+            .admin-detail-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <a class="admin-sidebar-brand" href="{% url 'admin_dashboard' %}">G<span>hantey</span></a>
+            <nav class="admin-nav">
+                <div class="admin-nav-section">Main</div>
+                <a href="{% url 'admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <span class="nav-icon">&#127968;</span> Dashboard
+                </a>
+                <div class="admin-nav-section">Management</div>
+                <a href="{% url 'admin_users' %}" class="{% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+                    <span class="nav-icon">&#128101;</span> Users
+                </a>
+                <a href="{% url 'admin_jobs' %}" class="{% if 'job' in request.resolver_match.url_name %}active{% endif %}">
+                    <span class="nav-icon">&#128188;</span> Jobs
+                </a>
+                <a href="{% url 'admin_categories' %}" class="{% if 'categor' in request.resolver_match.url_name %}active{% endif %}">
+                    <span class="nav-icon">&#128193;</span> Categories
+                </a>
+                <div class="admin-nav-section">Moderation</div>
+                <a href="{% url 'admin_kyc' %}" class="{% if 'kyc' in request.resolver_match.url_name %}active{% endif %}">
+                    <span class="nav-icon">&#128196;</span> KYC
+                </a>
+                <a href="{% url 'admin_reviews' %}" class="{% if 'review' in request.resolver_match.url_name %}active{% endif %}">
+                    <span class="nav-icon">&#11088;</span> Reviews
+                </a>
+                <a href="{% url 'admin_payments' %}" class="{% if 'payment' in request.resolver_match.url_name %}active{% endif %}">
+                    <span class="nav-icon">&#128179;</span> Payments
+                </a>
+                <div class="admin-nav-section">Analytics</div>
+                <a href="{% url 'admin_reports' %}" class="{% if 'report' in request.resolver_match.url_name %}active{% endif %}">
+                    <span class="nav-icon">&#128200;</span> Reports
+                </a>
+            </nav>
+        </aside>
+        <main class="admin-main">
+            <div class="admin-topbar">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="admin-topbar-actions">
+                    <a href="/" target="_blank">&#127968; View Site</a>
+                    <a href="{% url 'home' %}">{{ request.user.username }}</a>
+                </div>
+            </div>
+            <div class="admin-content">
+                {% if messages %}
+                <div style="margin-bottom: 20px;">
+                    {% for msg in messages %}
+                    <div style="padding: 12px 18px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;"
+                         class="{% if msg.tags == 'success' %}msg success{% elif msg.tags == 'error' %}msg error{% endif %}">
+                        {{ msg }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

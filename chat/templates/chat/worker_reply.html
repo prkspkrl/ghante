@@ -5,183 +5,167 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chat with {{ sender_name }} | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
     <style>
-        .chat-page { max-width: 640px; margin: 0 auto; padding: 40px 16px 80px; }
-        .chat-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
-        .chat-avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+        .chat-page {
+            max-width: 640px; margin: 0 auto; padding: 20px 16px 0;
+            display: flex; flex-direction: column;
+            height: calc(100vh - 78px); box-sizing: border-box;
+        }
+        .chat-header {
+            display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+            padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--white);
+        }
+        .chat-avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--green-soft); display: grid; place-items: center; }
         .chat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .chat-header-text h1 { margin: 0 0 2px; font-size: 1.3rem; }
-        .chat-header-text p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+        .chat-header-text h1 { margin: 0 0 2px; font-size: 1.15rem; }
+        .chat-header-text p { margin: 0; color: var(--muted); font-size: 0.85rem; }
         .chat-messages {
-            display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;
-            max-height: 400px; overflow-y: auto; padding: 16px;
+            display: flex; flex-direction: column; gap: 10px;
+            flex: 1; min-height: 0; overflow-y: auto; padding: 16px;
             border: 1px solid var(--line); border-radius: 16px; background: var(--cream);
         }
-        .chat-msg { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; }
+        .chat-msg { max-width: 78%; padding: 10px 14px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; }
         .chat-msg.sent { align-self: flex-end; background: var(--green); color: var(--white); border-bottom-right-radius: 4px; }
         .chat-msg.received { align-self: flex-start; background: var(--white); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
-        .chat-msg .sender-name { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 2px; }
+        .chat-msg .sender-name { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 2px; }
         .chat-msg.sent .sender-name { color: rgba(255,255,255,0.85); }
         .chat-msg.received .sender-name { color: var(--green-dark); }
-        .chat-msg .meta { display: block; font-size: 0.75rem; margin-top: 4px; opacity: 0.7; }
+        .chat-msg .msg-text { word-break: break-word; }
+        .chat-msg .msg-image { max-width: 100%; border-radius: 10px; margin-top: 4px; cursor: pointer; display: block; max-height: 260px; object-fit: cover; }
+        .chat-msg .meta { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; margin-top: 4px; opacity: 0.7; }
+        .read-receipt { font-size: 0.85rem; }
+        .read-receipt.read { color: #81d4fa; }
+        .typing-indicator {
+            display: none; align-self: flex-start; padding: 12px 18px;
+            background: var(--white); border: 1px solid var(--line); border-radius: 16px;
+            border-bottom-left-radius: 4px; font-size: 0.85rem; color: var(--muted);
+        }
+        .typing-indicator.active { display: flex; align-items: center; gap: 8px; }
+        .typing-dots { display: flex; gap: 4px; }
+        .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: typingBounce 1.4s infinite; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
         .chat-empty { text-align: center; color: var(--muted); padding: 40px 0; font-size: 0.95rem; }
-        .chat-form-card { padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--white); box-shadow: 0 8px 24px rgba(23,50,38,0.04); }
-        .chat-form-card label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.88rem; }
-        .chat-form-card textarea {
-            width: 100%; padding: 12px 14px; margin-bottom: 16px;
-            border: 1px solid var(--line); border-radius: 12px; outline-color: var(--green);
-            font: inherit; background: var(--cream); transition: border-color 0.2s, background 0.2s;
-            min-height: 100px; resize: vertical;
+        .chat-input-area {
+            flex-shrink: 0;
+            background: var(--white); border-top: 1px solid var(--line); padding: 12px 16px;
         }
-        .chat-form-card textarea:focus { background: var(--white); border-color: var(--green); }
-        .chat-send-btn {
-            display: block; width: 100%; padding: 14px; border: 0; border-radius: 14px;
-            background: linear-gradient(135deg, var(--green) 0%, #0a9a53 100%);
-            color: var(--white); font-weight: 800; font-size: 1rem; cursor: pointer;
-            transition: box-shadow 0.3s, transform 0.2s;
-        }
-        .chat-send-btn:hover { box-shadow: 0 8px 28px rgba(15,123,69,0.35); transform: translateY(-1px); }
+        .chat-input-inner { max-width: 640px; margin: 0 auto; }
+        .chat-input-preview { display: none; margin-bottom: 10px; position: relative; }
+        .chat-input-preview img { max-height: 120px; border-radius: 12px; border: 1px solid var(--line); }
+        .chat-input-preview .remove-preview { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #c62828; color: white; border: none; font-size: 1rem; cursor: pointer; display: grid; place-items: center; }
+        .chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+        .chat-input-row textarea { flex: 1; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; font: inherit; font-size: 0.92rem; resize: none; min-height: 42px; max-height: 120px; outline-color: var(--green); transition: border-color 0.2s; }
+        .chat-input-row textarea:focus { border-color: var(--green); }
+        .chat-action-btn { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--white); cursor: pointer; display: grid; place-items: center; font-size: 1.1rem; flex-shrink: 0; transition: background 0.2s; }
+        .chat-action-btn:hover { background: var(--green-soft); }
+        .chat-send-btn { width: 42px; height: 42px; border-radius: 12px; border: 0; background: var(--green); color: white; cursor: pointer; display: grid; place-items: center; font-size: 1.1rem; flex-shrink: 0; transition: box-shadow 0.3s; }
+        .chat-send-btn:hover { box-shadow: 0 4px 12px rgba(15,123,69,0.3); }
+        #imageInput { display: none; }
+        .image-lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; place-items: center; cursor: pointer; }
+        .image-lightbox.active { display: grid; }
+        .image-lightbox img { max-width: 90%; max-height: 90%; border-radius: 8px; }
     </style>
 </head>
 <body>
     <header class="site-header">
         <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
         <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
-            <span class="menu-toggle-bar"></span>
-            <span class="menu-toggle-bar"></span>
-            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span><span class="menu-toggle-bar"></span><span class="menu-toggle-bar"></span>
         </button>
         <nav class="nav" aria-label="Main navigation">
-            <a href="/">Home</a>
-            <a href="/workers/">Workers</a>
+            <a href="/">Home</a><a href="/jobs/">Jobs</a><a href="/workers/">Workers</a>
         </nav>
         <div class="header-actions">
             {% if request.user.is_authenticated %}
-                <a href="{% url 'worker_inbox' %}">Inbox</a>
-                <a href="/accounts/dashboard/" class="nav-badge">Dashboard{% if total_unread %}<span class="nav-badge-count">{{ total_unread }}</span>{% endif %}</a>
+                <a href="{% url 'worker_inbox' %}" class="nav-badge">Inbox</a>
+                <a href="/accounts/dashboard/" class="nav-badge">Dashboard</a>
             {% endif %}
         </div>
     </header>
-    <main>
-        <div class="chat-page">
-            <div class="chat-header">
-                <div class="chat-avatar">
-                    <img src="https://i.pravatar.cc/150?img={{ other_user.pk }}" alt="{{ sender_name }}">
-                </div>
-                <div class="chat-header-text">
-                    <h1>{{ sender_name }}</h1>
-                    <p>Conversation about your services</p>
-                </div>
+    <main class="chat-page">
+        <div class="chat-header">
+            <div class="chat-avatar">
+                <img src="https://i.pravatar.cc/150?img={{ other_user.pk }}" alt="{{ sender_name }}">
             </div>
-
-            {% if messages %}
-            <div class="messages" style="margin-bottom: 16px;">
-                {% for msg in messages %}
-                <div class="msg {{ msg.tags }}">{{ msg }}</div>
-                {% endfor %}
+            <div class="chat-header-text">
+                <h1>{{ sender_name }}</h1>
+                <p>Conversation</p>
             </div>
-            {% endif %}
-
-            <div class="chat-messages" id="chatMessages">
-                {% for msg in chat_messages %}
-                <div class="chat-msg {% if msg.sender == request.user %}sent{% else %}received{% endif %}" data-id="{{ msg.id }}">
-                    <span class="sender-name">{{ msg.sender_name }}</span>
-                    {{ msg.message }}
-                    <span class="meta">{{ msg.sent_at|date:"M d, H:i" }}</span>
-                </div>
-                {% empty %}
-                <div class="chat-empty">
-                    <p>No messages yet.</p>
-                </div>
-                {% endfor %}
+        </div>
+        {% if messages %}<div class="messages" style="margin-bottom: 12px;">{% for msg in messages %}<div class="msg {{ msg.tags }}">{{ msg }}</div>{% endfor %}</div>{% endif %}
+        <div class="chat-messages" id="chatMessages">
+            {% for msg in chat_messages %}
+            <div class="chat-msg {% if msg.sender == request.user %}sent{% else %}received{% endif %}" data-id="{{ msg.id }}">
+                <span class="sender-name">{{ msg.sender_name }}</span>
+                {% if msg.message_type == 'image' and msg.image %}<img src="{{ msg.image.url }}" class="msg-image" onclick="openLightbox(this.src)" alt="Image">{% endif %}
+                {% if msg.message %}<span class="msg-text">{{ msg.message }}</span>{% endif %}
+                <span class="meta">{{ msg.sent_at|date:"M d, H:i" }}{% if msg.sender == request.user %} <span class="read-receipt {% if msg.is_read %}read{% endif %}" data-msg-id="{{ msg.id }}">{% if msg.is_read %}&#10003;&#10003;{% else %}&#10003;{% endif %}</span>{% endif %}</span>
             </div>
-
-            <div class="chat-form-card">
-                <form method="post">
+            {% empty %}<div class="chat-empty"><p>No messages yet.</p></div>{% endfor %}
+            <div class="typing-indicator" id="typingIndicator"><div class="typing-dots"><span></span><span></span><span></span></div><span id="typingText">{{ sender_name }} is typing...</span></div>
+        </div>
+        <div class="chat-input-area">
+            <div class="chat-input-inner">
+                <div class="chat-input-preview" id="imagePreview"><img id="previewImg" src="" alt="Preview"><button class="remove-preview" onclick="removeImage()">&times;</button></div>
+                <form method="post" enctype="multipart/form-data" id="chatForm">
                     {% csrf_token %}
-                    <label for="message">Reply to {{ sender_name }}</label>
-                    <textarea id="message" name="message" placeholder="Type your reply..." required></textarea>
-                    <button type="submit" class="chat-send-btn">Send reply</button>
+                    <input type="file" name="image" id="imageInput" accept="image/*">
+                    <div class="chat-input-row">
+                        <button type="button" class="chat-action-btn" onclick="document.getElementById('imageInput').click()" title="Send image">&#128247;</button>
+                        <textarea id="messageInput" name="message" placeholder="Type a reply..." rows="1"></textarea>
+                        <button type="submit" class="chat-send-btn" title="Send">&#10148;</button>
+                    </div>
                 </form>
             </div>
         </div>
     </main>
-    <footer class="site-footer">
-        <div>
-            <a class="brand" href="/">Ghantey</a>
-            <p>Tackle your to-do list with trusted local help.</p>
-        </div>
-        <div class="footer-links">
-            <a href="/">Home</a>
-            <a href="/workers/">Workers</a>
-        </div>
-    </footer>
+    <div class="image-lightbox" id="lightbox" onclick="this.classList.remove('active')"><img id="lightboxImg" src="" alt="Full image"></div>
+    <footer class="site-footer"><div><a class="brand" href="/">Ghantey</a><p>Tackle your to-do list with trusted local help.</p></div><div class="footer-links"><a href="/">Home</a><a href="/jobs/">Jobs</a><a href="/workers/">Workers</a></div></footer>
     <script>
     (function() {
         const container = document.getElementById('chatMessages');
-        const textarea = document.getElementById('message');
+        const textarea = document.getElementById('messageInput');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const typingText = document.getElementById('typingText');
+        const chatForm = document.getElementById('chatForm');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
         let lastId = {{ chat_messages.last.id|default:0 }};
+        let typingTimeout = null;
+        let isTyping = false;
 
-        function playBeep() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                function beep(freq, startTime) {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.frequency.value = freq;
-                    osc.type = 'sine';
-                    gain.gain.value = 0.3;
-                    osc.start(ctx.currentTime + startTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + 0.15);
-                    osc.stop(ctx.currentTime + startTime + 0.15);
-                }
-                beep(880, 0);
-                beep(1100, 0.18);
-            } catch(e) {}
-        }
+        window.openLightbox = function(src) { lightboxImg.src = src; lightbox.classList.add('active'); };
+        function scrollToBottom() { container.scrollTop = container.scrollHeight; }
+        function playBeep() { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 880; osc.type = 'sine'; gain.gain.value = 0.2; osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15); osc.stop(ctx.currentTime + 0.15); } catch(e) {} }
 
-        function scrollToBottom() {
-            container.scrollTop = container.scrollHeight;
-        }
+        imageInput.addEventListener('change', function() { if (this.files && this.files[0]) { const reader = new FileReader(); reader.onload = function(e) { previewImg.src = e.target.result; imagePreview.style.display = 'block'; }; reader.readAsDataURL(this.files[0]); } });
+        window.removeImage = function() { imageInput.value = ''; imagePreview.style.display = 'none'; };
+        textarea.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; sendTypingStatus(true); clearTimeout(typingTimeout); typingTimeout = setTimeout(function() { sendTypingStatus(false); }, 2000); });
+        textarea.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (textarea.value.trim() || imageInput.files.length > 0) chatForm.submit(); } });
+
+        function sendTypingStatus(typing) { if (typing === isTyping) return; isTyping = typing; fetch("{% url 'chat_typing' pk=other_user.pk %}", { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify({is_typing: typing}) }); }
 
         function fetchNewMessages() {
-            fetch("{% url 'worker_chat_json' pk=other_user.pk %}?last_id=" + lastId)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.messages && data.messages.length > 0) {
-                        const empty = container.querySelector('.chat-empty');
-                        if (empty) empty.remove();
-                        let hasNewReceived = false;
-                        data.messages.forEach(msg => {
-                            if (document.querySelector('[data-id="' + msg.id + '"]')) return;
-                            const div = document.createElement('div');
-                            div.className = 'chat-msg ' + (msg.is_mine ? 'sent' : 'received');
-                            div.setAttribute('data-id', msg.id);
-                            div.innerHTML = '<span class="sender-name">' + msg.sender_name + '</span>' + msg.message + '<span class="meta">' + msg.sent_at + '</span>';
-                            container.appendChild(div);
-                            lastId = msg.id;
-                            if (!msg.is_mine) hasNewReceived = true;
-                        });
-                        scrollToBottom();
-                        if (hasNewReceived) playBeep();
-                    }
-                });
+            fetch("{% url 'worker_chat_json' pk=other_user.pk %}?last_id=" + lastId).then(r => r.json()).then(data => {
+                if (data.messages && data.messages.length > 0) {
+                    const empty = container.querySelector('.chat-empty'); if (empty) empty.remove();
+                    let hasNewReceived = false;
+                    data.messages.forEach(msg => { if (document.querySelector('[data-id="' + msg.id + '"]')) return; const div = document.createElement('div'); div.className = 'chat-msg ' + (msg.is_mine ? 'sent' : 'received'); div.setAttribute('data-id', msg.id); let html = '<span class="sender-name">' + msg.sender_name + '</span>'; if (msg.message_type === 'image' && msg.image_url) html += '<img src="' + msg.image_url + '" class="msg-image" onclick="openLightbox(this.src)" alt="Image">'; if (msg.message) html += '<span class="msg-text">' + msg.message + '</span>'; html += '<span class="meta">' + msg.sent_at; if (msg.is_mine) html += ' <span class="read-receipt ' + (msg.is_read ? 'read' : '') + '" data-msg-id="' + msg.id + '">' + (msg.is_read ? '&#10003;&#10003;' : '&#10003;') + '</span>'; html += '</span>'; div.innerHTML = html; container.insertBefore(div, typingIndicator); lastId = msg.id; if (!msg.is_mine) hasNewReceived = true; }); scrollToBottom(); if (hasNewReceived) playBeep(); }
+                if (data.read_ids && data.read_ids.length > 0) data.read_ids.forEach(function(id) { const r = document.querySelector('.read-receipt[data-msg-id="' + id + '"]'); if (r) { r.classList.add('read'); r.innerHTML = '&#10003;&#10003;'; } });
+            });
         }
 
-        textarea.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (textarea.value.trim()) {
-                    textarea.closest('form').submit();
-                }
-            }
-        });
+        function checkTyping() { fetch("{% url 'chat_typing_status' pk=other_user.pk %}").then(r => r.json()).then(data => { if (data.typing && data.typing.length > 0) { typingText.textContent = data.typing.join(', ') + (data.typing.length === 1 ? ' is typing...' : ' are typing...'); typingIndicator.classList.add('active'); } else { typingIndicator.classList.remove('active'); } }); }
 
-        scrollToBottom();
-        setInterval(fetchNewMessages, 3000);
+        scrollToBottom(); setInterval(fetchNewMessages, 2000); setInterval(checkTyping, 2000);
+        chatForm.addEventListener('submit', function() { sendTypingStatus(false); });
     })();
     </script>
 </body>

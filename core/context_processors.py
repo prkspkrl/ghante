@@ -14,8 +14,9 @@ def unread_counts(request):
 
     # Unread notifications
     unread_notifications = Notification.objects.filter(
-        recipient_email=email, is_read=False,
-    ).count()
+        Q(recipient=request.user) | Q(recipient_email=email),
+        is_read=False,
+    ).distinct().count()
 
     # Unread chat messages (from workers, not sent by user)
     worker_ids = (

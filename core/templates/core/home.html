@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ghantey | Book trusted local help</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
     <style>
         .home-search-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
@@ -56,6 +57,7 @@
         </button>
         <nav class="nav" aria-label="Main navigation">
             <a href="/workers/">Workers</a>
+            <a href="/jobs/">Jobs</a>
             <a href="/popular-projects/">Services</a>
             <a href="/how-it-works/">How it works</a>
         </nav>
@@ -226,6 +228,36 @@
                 </div>
             </div>
         </section>
+
+        {% if featured_jobs %}
+        <section class="section" id="featured-jobs">
+            <div class="section-heading">
+                <p class="eyebrow">Latest jobs</p>
+                <h2>Featured jobs</h2>
+                <p>Open jobs posted by customers. Apply now and get hired.</p>
+            </div>
+            <div class="job-grid">
+                {% for job in featured_jobs %}
+                <a href="/jobs/{{ job.pk }}/" class="job-card">
+                    <div class="job-card-header">
+                        <h3>{{ job.title }}</h3>
+                        <span class="job-card-badge">{{ job.get_category_display }}</span>
+                    </div>
+                    <p>{{ job.description }}</p>
+                    <div class="job-card-meta">
+                        <span>&#128176; Rs. {{ job.budget }}</span>
+                        <span>&#128205; {{ job.address }}</span>
+                        <span>&#128197; {{ job.preferred_date }}</span>
+                        <span>&#128101; {{ job.workers_needed }} worker{{ job.workers_needed|pluralize }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="section-footer-link">
+                <a href="/jobs/" class="text-link">View all jobs &rarr;</a>
+            </div>
+        </section>
+        {% endif %}
 
         <section class="section" id="projects">
             <div class="section-heading">

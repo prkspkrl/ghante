@@ -1,0 +1,41 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}KYC Verification{% endblock %}
+{% block page_title %}KYC Verification{% endblock %}
+{% block content %}
+<div class="admin-filters">
+    <form method="get" style="display:flex; gap:10px; align-items:center;">
+        <select name="status">
+            <option value="">All Status</option>
+            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="approved" {% if selected_status == 'approved' %}selected{% endif %}>Approved</option>
+            <option value="rejected" {% if selected_status == 'rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+</div>
+<div class="admin-card">
+    <table class="admin-table">
+        <thead><tr><th>Applicant</th><th>Document Type</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for req in requests %}
+        <tr>
+            <td><strong>{{ req.applicant_name }}</strong></td>
+            <td>{{ req.document_type }}</td>
+            <td>
+                <span class="badge {% if req.status == 'approved' %}badge-green{% elif req.status == 'rejected' %}badge-red{% else %}badge-orange{% endif %}">{{ req.status }}</span>
+            </td>
+            <td>{{ req.submitted_at|timesince }} ago</td>
+            <td style="display:flex; gap:6px;">
+                {% if req.status == 'pending' %}
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="approve"><input type="hidden" name="request_id" value="{{ req.pk }}"><button type="submit" class="admin-btn admin-btn-sm admin-btn-green">Approve</button></form>
+                <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reject"><input type="hidden" name="request_id" value="{{ req.pk }}"><button type="submit" class="admin-btn admin-btn-sm admin-btn-red">Reject</button></form>
+                {% else %}
+                <span style="color: var(--muted); font-size: 0.85rem;">No actions</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="admin-empty">No verification requests found.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

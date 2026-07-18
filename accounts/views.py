@@ -44,6 +44,7 @@ def dashboard(request):
     context = {}
     if request.user.is_authenticated:
         from profiles.models import WorkerProfile, Booking
+        from jobs.models import Job, JobApplication
         from chat.models import ChatMessage
         from django.db.models import Count
 
@@ -71,6 +72,53 @@ def dashboard(request):
             'completed': customer_bookings.filter(status='completed').count(),
             'cancelled': customer_bookings.filter(status__in=['cancelled', 'rejected']).count(),
         }
+
+        # Job stats and recent applications
+        my_jobs = Job.objects.filter(customer=request.user)
+        job_ids = my_jobs.values_list('id', flat=True)
+        recent_applications = (
+            JobApplication.objects
+            .filter(job_id__in=job_ids)
+            .select_related('worker', 'worker__user', 'worker__user__profile', 'job')
+            .order_by('-created_at')[:10]
+        )
+        total_applications = JobApplication.objects.filter(job_id__in=job_ids).count()
+        pending_applications = JobApplication.objects.filter(job_id__in=job_ids, status='pending').count()
+
+        context['my_jobs'] = my_jobs
+        context['recent_applications'] = recent_applications
+        context['total_applications'] = total_applications
+        context['pending_applications'] = pending_applications
+        context['job_stats'] = {
+            'total': my_jobs.count(),
+            'open': my_jobs.filter(status='open').count(),
+            'assigned': my_jobs.filter(status='assigned').count(),
+            'completed': my_jobs.filter(status='completed').count(),
+        }
+
+        # Customer bookings list
+        context['customer_bookings'] = customer_bookings.order_by('-created_at')[:20]
+
+        # Worker bookings & reviews
+        if worker_profile:
+            from reviews.models import Review
+            worker_bookings = Booking.objects.filter(worker=worker_profile).order_by('-created_at')
+            context['worker_bookings'] = worker_bookings[:20]
+            context['pending_bookings'] = worker_bookings.filter(status='pending').count()
+            context['worker_reviews'] = Review.objects.filter(worker=worker_profile).select_related('reviewer').order_by('-created_at')[:20]
+
+        # Unread messages (customer inbox)
+        from django.db.models import Q
+        unread_messages = ChatMessage.objects.filter(
+            Q(sender=request.user) | Q(worker__user=request.user),
+            is_read=False
+        ).exclude(sender=request.user).count()
+        context['unread_messages'] = unread_messages
+
+        # Unread notifications
+        from notifications.models import Notification
+        unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        context['unread_notifications'] = unread_notifications
 
     return render(request, 'accounts/dashboard.html', context)
 

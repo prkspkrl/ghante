@@ -12,4 +12,6 @@ urlpatterns = [
     path('bookings/<int:pk>/action/', views.booking_action, name='booking_action'),
     path('my-bookings/', views.customer_bookings, name='customer_bookings'),
     path('my-bookings/<int:pk>/cancel/', views.cancel_booking, name='cancel_booking'),
+    path('favorites/', views.favorite_workers, name='favorite_workers'),
+    path('<int:pk>/favorite/', views.toggle_favorite, name='toggle_favorite'),
 ]

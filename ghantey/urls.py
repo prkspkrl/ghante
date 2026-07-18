@@ -23,9 +23,13 @@ urlpatterns = [
     path('', include('core.urls')),
     path('accounts/', include('accounts.urls')),
     path('workers/', include('profiles.urls')),
+    path('jobs/', include('jobs.urls')),
+    path('reviews/', include('reviews.urls')),
     path('chat/', include('chat.urls')),
     path('notifications/', include('notifications.urls')),
+    path('dashboard/', include('admin_panel.urls')),
     path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),
 ]
 
 if settings.DEBUG:

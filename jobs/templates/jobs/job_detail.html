@@ -1,0 +1,616 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ job.title }} | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .job-detail-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 32px;
+            margin-bottom: 60px;
+        }
+        .job-main h1 {
+            margin: 0 0 8px;
+            font-size: 1.8rem;
+        }
+        .job-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+        .job-meta-row span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .job-description {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--ink);
+            white-space: pre-line;
+        }
+        .job-photos {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+        .job-photos img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+        }
+        .job-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .job-sidebar-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+            background: var(--white);
+        }
+        .job-sidebar-card h3 {
+            margin: 0 0 16px;
+            font-size: 1rem;
+        }
+        .job-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+            font-size: 0.9rem;
+        }
+        .job-info-row:last-child {
+            border-bottom: none;
+        }
+        .job-info-label {
+            color: var(--muted);
+        }
+        .job-info-value {
+            font-weight: 600;
+        }
+        .job-status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-draft { background: #f0f0f0; color: #666; }
+        .status-open { background: var(--green-soft); color: var(--green-dark); }
+        .status-assigned { background: #e8f4fd; color: #1a6fb5; }
+        .status-completed { background: #e7f5ed; color: #064f2a; }
+        .status-cancelled { background: #fde8e8; color: #b5321a; }
+        .application-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .application-card h4 {
+            margin: 0 0 4px;
+        }
+        .application-card p {
+            margin: 0 0 8px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .application-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-accept {
+            padding: 8px 16px;
+            background: var(--green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .btn-reject {
+            padding: 8px 16px;
+            background: #fde8e8;
+            color: #b5321a;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        @media (max-width: 900px) {
+            .job-detail-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .active-job-card {
+            margin-top: 28px;
+            border: 2px solid var(--green);
+            border-radius: 20px;
+            padding: 28px;
+            background: linear-gradient(135deg, var(--green-soft) 0%, #d5f5e6 100%);
+        }
+        .active-job-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .active-job-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--green);
+            color: white;
+            display: grid;
+            place-items: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .active-job-icon.pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(15, 123, 69, 0.4); }
+            50% { box-shadow: 0 0 0 12px rgba(15, 123, 69, 0); }
+        }
+        .active-job-title {
+            margin: 0 0 4px;
+            font-size: 1.2rem;
+        }
+        .active-job-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-assigned { background: #e8f4fd; color: #1a6fb5; }
+        .status-running { background: var(--green); color: white; }
+        .active-worker {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            background: var(--white);
+            border-radius: 14px;
+            margin-bottom: 16px;
+        }
+        .active-worker-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--green-soft);
+            color: var(--green);
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .active-worker-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .active-worker-info h4 {
+            margin: 0 0 2px;
+            font-size: 1rem;
+        }
+        .active-worker-info span {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .active-worker-meta {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .active-job-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+        .timeline-item.completed { color: var(--green-dark); }
+        .timeline-item.active { color: var(--green); font-weight: 600; }
+        .timeline-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            flex-shrink: 0;
+        }
+        .timeline-dot.pulse {
+            animation: dotPulse 1.5s infinite;
+        }
+        @keyframes dotPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.7; }
+        }
+        .active-job-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-start {
+            flex: 1;
+            padding: 14px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1565c0, #1976d2);
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+        .btn-start:hover {
+            box-shadow: 0 4px 16px rgba(21, 101, 192, 0.4);
+        }
+        .btn-complete {
+            flex: 1;
+            padding: 14px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--green), #0a9a53);
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+        .btn-complete:hover {
+            box-shadow: 0 4px 16px rgba(15, 123, 69, 0.4);
+        }
+        .btn-cancel {
+            padding: 14px 20px;
+            border: 1px solid #f0b8b8;
+            border-radius: 12px;
+            background: white;
+            color: #b5321a;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-cancel:hover {
+            background: #fff1f1;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/" class="nav-badge">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        {% if messages %}
+        <div class="messages" style="margin-bottom: 20px;">
+            {% for msg in messages %}
+            <div class="msg {{ msg.tags }}">{{ msg }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="job-detail-layout">
+            <div class="job-main">
+                <h1>{{ job.title }}</h1>
+                <div class="job-meta-row">
+                    <span class="job-status-badge status-{{ job.status }}">{{ job.get_status_display }}</span>
+                    <span>&#128100; Posted by {{ job.customer.username }}</span>
+                    <span>&#128197; {{ job.created_at|timesince }} ago</span>
+                </div>
+
+                <div class="job-description">{{ job.description }}</div>
+
+                {% if job.photos.all %}
+                <div class="job-photos">
+                    {% for photo in job.photos.all %}
+                    <img src="{{ photo.image.url }}" alt="Job photo">
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if job.status == 'assigned' or job.status == 'in_progress' %}
+                <div class="active-job-card">
+                    <div class="active-job-header">
+                        <div class="active-job-icon {% if job.status == 'in_progress' %}pulse{% endif %}">
+                            {% if job.status == 'in_progress' %}&#9881;{% else %}&#128204;{% endif %}
+                        </div>
+                        <div>
+                            <h2 class="active-job-title">Active Job</h2>
+                            <span class="active-job-status {% if job.status == 'in_progress' %}status-running{% else %}status-assigned{% endif %}">
+                                {% if job.status == 'in_progress' %}In Progress{% else %}Assigned{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if active_worker %}
+                    <div class="active-worker">
+                        <div class="active-worker-avatar">
+                            {% if active_worker.photo %}
+                            <img src="{{ active_worker.photo.url }}" alt="{{ active_worker.name }}">
+                            {% else %}
+                            {{ active_worker.name|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="active-worker-info">
+                            <h4>{{ active_worker.name }}</h4>
+                            <span>{{ active_worker.skill }} &middot; {{ active_worker.location }}</span>
+                            <div class="active-worker-meta">
+                                <span>&#9733; {{ active_worker.rating }}</span>
+                                <span>Rs. {{ active_worker.hourly_rate }}/hr</span>
+                                {% if active_worker.user.profile.phone_number %}
+                                <span>&#128222; {{ active_worker.user.profile.phone_number }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if job.started_at %}
+                    <div class="active-job-timeline">
+                        <div class="timeline-item completed">
+                            <span class="timeline-dot"></span>
+                            <span>Job started {{ job.started_at|timesince }} ago</span>
+                        </div>
+                        {% if job.status == 'in_progress' %}
+                        <div class="timeline-item active">
+                            <span class="timeline-dot pulse"></span>
+                            <span>Work in progress...</span>
+                        </div>
+                        {% elif job.status == 'completed' %}
+                        <div class="timeline-item completed">
+                            <span class="timeline-dot"></span>
+                            <span>Job completed</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if is_owner %}
+                    <div class="active-job-actions">
+                        {% if job.status == 'assigned' %}
+                        <form method="post" action="/jobs/{{ job.pk }}/action/">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="start">
+                            <button type="submit" class="btn-start">&#9654; Start Job</button>
+                        </form>
+                        {% elif job.status == 'in_progress' %}
+                        <form method="post" action="/jobs/{{ job.pk }}/action/">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="complete">
+                            <button type="submit" class="btn-complete">&#10003; Mark Complete</button>
+                        </form>
+                        {% endif %}
+                        <form method="post" action="/jobs/{{ job.pk }}/action/" onsubmit="return confirm('Cancel this job?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel">
+                            <button type="submit" class="btn-cancel">Cancel Job</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if is_owner and job.applications.count > 0 and job.status == 'open' %}
+                <div style="margin-top: 40px;">
+                    <h2 style="font-size: 1.3rem; margin-bottom: 16px;">Applications ({{ job.applications.count }})</h2>
+                    {% for app in job.applications.all %}
+                    <div class="application-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h4>{{ app.worker.name }}</h4>
+                            <span class="job-status-badge status-{{ app.status }}">{{ app.get_status_display }}</span>
+                        </div>
+                        <p>{{ app.worker.skill }} &middot; {{ app.worker.location }}</p>
+                        {% if app.message %}
+                        <p style="color: var(--ink);">"{{ app.message }}"</p>
+                        {% endif %}
+                        {% if app.status == 'pending' %}
+                        <div class="application-actions">
+                            <form method="post" action="/jobs/{{ job.pk }}/applications/{{ app.pk }}/action/">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="accept">
+                                <button type="submit" class="btn-accept">&#10003; Accept</button>
+                            </form>
+                            <form method="post" action="/jobs/{{ job.pk }}/applications/{{ app.pk }}/action/">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="btn-reject">&#10007; Reject</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="job-sidebar">
+                <div class="job-sidebar-card">
+                    <h3>Job Details</h3>
+                    <div class="job-info-row">
+                        <span class="job-info-label">Budget</span>
+                        <span class="job-info-value">Rs. {{ job.budget }}</span>
+                    </div>
+                    <div class="job-info-row">
+                        <span class="job-info-label">Hours needed</span>
+                        <span class="job-info-value">{{ job.hours_needed }} hr{{ job.hours_needed|pluralize }}</span>
+                    </div>
+                    <div class="job-info-row">
+                        <span class="job-info-label">Preferred date</span>
+                        <span class="job-info-value">{{ job.preferred_date }}</span>
+                    </div>
+                    <div class="job-info-row">
+                        <span class="job-info-label">Workers needed</span>
+                        <span class="job-info-value">{{ job.workers_needed }}</span>
+                    </div>
+                    <div class="job-info-row">
+                        <span class="job-info-label">Category</span>
+                        <span class="job-info-value">{{ job.get_category_display }}</span>
+                    </div>
+                    <div class="job-info-row">
+                        <span class="job-info-label">Location</span>
+                        <span class="job-info-value">{{ job.address }}</span>
+                    </div>
+                </div>
+
+                {% if can_review_worker %}
+                <div class="job-sidebar-card" style="border: 2px solid var(--green); background: var(--green-soft);">
+                    <h3>&#11088; Review the Worker</h3>
+                    <p style="font-size: 0.9rem; color: var(--muted); margin: 0 0 12px;">This job is assigned. Rate your experience with the worker.</p>
+                    <form method="post" action="/reviews/worker/{{ job.applications.all.0.worker.pk }}/leave/">
+                        {% csrf_token %}
+                        <input type="hidden" name="job_id" value="{{ job.pk }}">
+                        <select name="rating" style="width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; font: inherit;">
+                            <option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; 5 - Excellent</option>
+                            <option value="4">&#9733;&#9733;&#9733;&#9733; 4 - Good</option>
+                            <option value="3" selected>&#9733;&#9733;&#9733; 3 - Average</option>
+                            <option value="2">&#9733;&#9733; 2 - Poor</option>
+                            <option value="1">&#9733; 1 - Terrible</option>
+                        </select>
+                        <textarea name="comment" placeholder="Share your experience..." style="width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; min-height: 80px; resize: vertical; font: inherit;"></textarea>
+                        <button type="submit" style="display: block; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--green); color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer;">Submit Review</button>
+                    </form>
+                </div>
+                {% elif has_reviewed_worker %}
+                <div class="job-sidebar-card" style="background: #e7f5ed; border-color: #b8e0c8;">
+                    <h3>&#10003; Review Submitted</h3>
+                    <p style="font-size: 0.9rem; color: var(--green-dark); margin: 0;">You've already reviewed the worker for this job.</p>
+                </div>
+                {% endif %}
+
+                {% if can_review_customer %}
+                <div class="job-sidebar-card" style="border: 2px solid var(--green); background: var(--green-soft);">
+                    <h3>&#11088; Review the Customer</h3>
+                    <p style="font-size: 0.9rem; color: var(--muted); margin: 0 0 12px;">This job is completed. Rate your experience with the customer.</p>
+                    <form method="post" action="/reviews/job/{{ job.pk }}/leave/">
+                        {% csrf_token %}
+                        <select name="rating" style="width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; font: inherit;">
+                            <option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; 5 - Excellent</option>
+                            <option value="4">&#9733;&#9733;&#9733;&#9733; 4 - Good</option>
+                            <option value="3" selected>&#9733;&#9733;&#9733; 3 - Average</option>
+                            <option value="2">&#9733;&#9733; 2 - Poor</option>
+                            <option value="1">&#9733; 1 - Terrible</option>
+                        </select>
+                        <textarea name="comment" placeholder="Share your experience..." style="width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; min-height: 80px; resize: vertical; font: inherit;"></textarea>
+                        <button type="submit" style="display: block; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--green); color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer;">Submit Review</button>
+                    </form>
+                </div>
+                {% elif has_reviewed_customer %}
+                <div class="job-sidebar-card" style="background: #e7f5ed; border-color: #b8e0c8;">
+                    <h3>&#10003; Review Submitted</h3>
+                    <p style="font-size: 0.9rem; color: var(--green-dark); margin: 0;">You've already reviewed the customer for this job.</p>
+                </div>
+                {% endif %}
+
+                {% if is_owner %}
+                <div class="job-sidebar-card">
+                    <h3>Manage Job</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="/jobs/{{ job.pk }}/edit/" style="display: block; padding: 12px; text-align: center; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 0.9rem;">Edit Job</a>
+                        {% if job.status == 'draft' %}
+                        <form method="post" action="/jobs/{{ job.pk }}/action/">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="publish">
+                            <button type="submit" style="display: block; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--green); color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer;">Publish Job</button>
+                        </form>
+                        {% endif %}
+                        {% if job.status == 'open' or job.status == 'assigned' %}
+                        <form method="post" action="/jobs/{{ job.pk }}/action/">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel">
+                            <button type="submit" style="display: block; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #fde8e8; color: #b5321a; font-weight: 700; font-size: 0.9rem; cursor: pointer;">Cancel Job</button>
+                        </form>
+                        {% endif %}
+                        <form method="post" action="/jobs/{{ job.pk }}/delete/" onsubmit="return confirm('Delete this job?');">
+                            {% csrf_token %}
+                            <button type="submit" style="display: block; width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: white; color: #b5321a; font-weight: 600; font-size: 0.9rem; cursor: pointer;">Delete Job</button>
+                        </form>
+                    </div>
+                </div>
+                {% elif job.status == 'open' and request.user.is_authenticated %}
+                <div class="job-sidebar-card">
+                    <h3>Interested?</h3>
+                    {% if has_applied %}
+                    <p style="color: var(--muted); font-size: 0.9rem; margin: 0 0 12px;">You have already applied to this job.</p>
+                    {% else %}
+                    <form method="post" action="/jobs/{{ job.pk }}/apply/">
+                        {% csrf_token %}
+                        <label for="message" style="font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; display: block;">Message (optional)</label>
+                        <textarea id="message" name="message" placeholder="Tell the customer why you're a good fit..." style="width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; min-height: 80px; resize: vertical; font: inherit;"></textarea>
+                        <button type="submit" style="display: block; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: linear-gradient(135deg, var(--green) 0%, #0a9a53 100%); color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer;">Apply Now</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% elif not request.user.is_authenticated %}
+                <div class="job-sidebar-card">
+                    <h3>Interested?</h3>
+                    <p style="color: var(--muted); font-size: 0.9rem; margin: 0 0 12px;">Log in or register to apply for this job.</p>
+                    <a href="/accounts/login/" style="display: block; padding: 12px; text-align: center; background: var(--green); color: white; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 0.9rem;">Log in to Apply</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/services/">Services</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/how-it-works/">How it works</a>
+            <a href="mailto:hello@ghantey.local">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

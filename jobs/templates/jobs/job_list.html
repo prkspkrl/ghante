@@ -1,0 +1,443 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Browse Jobs | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .browse-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 28px;
+            margin-bottom: 60px;
+        }
+        .filter-sidebar {
+            position: sticky;
+            top: 20px;
+            align-self: start;
+        }
+        .filter-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+            background: var(--white);
+        }
+        .filter-card h3 {
+            margin: 0 0 16px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font: inherit;
+            font-size: 0.9rem;
+            outline-color: var(--green);
+            transition: border-color 0.2s;
+        }
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: var(--green);
+        }
+        .filter-budget-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .filter-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--green) 0%, #0a9a53 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+            margin-top: 16px;
+        }
+        .filter-btn:hover {
+            box-shadow: 0 4px 16px rgba(15, 123, 69, 0.3);
+        }
+        .filter-clear {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-decoration: underline;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+        }
+        .browse-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .browse-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .browse-results {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font: inherit;
+            font-size: 0.9rem;
+            background: var(--white);
+            cursor: pointer;
+        }
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            font: inherit;
+            font-size: 1rem;
+            outline-color: var(--green);
+        }
+        .search-bar input:focus {
+            border-color: var(--green);
+        }
+        .search-bar button {
+            padding: 12px 24px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--green);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--green-soft);
+            color: var(--green-dark);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .filter-tag a {
+            color: var(--green-dark);
+            text-decoration: none;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .job-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 18px;
+        }
+        .job-card {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 22px;
+            background: var(--white);
+            text-decoration: none;
+            color: var(--ink);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .job-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 36px rgba(15, 123, 69, 0.12);
+        }
+        .job-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        .job-card h3 {
+            margin: 0;
+            font-size: 1.05rem;
+            color: var(--ink);
+        }
+        .job-card-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: var(--green-soft);
+            color: var(--green-dark);
+            white-space: nowrap;
+        }
+        .job-card p {
+            margin: 0 0 12px;
+            color: var(--muted);
+            font-size: 0.88rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .job-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid var(--line);
+        }
+        .job-card-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .no-results p {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+        @media (max-width: 900px) {
+            .browse-layout {
+                grid-template-columns: 1fr;
+            }
+            .filter-sidebar {
+                position: static;
+            }
+            .filter-card {
+                display: none;
+            }
+            .filter-card.active {
+                display: block;
+            }
+            .mobile-filter-toggle {
+                display: flex;
+            }
+        }
+        .mobile-filter-toggle {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--white);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/jobs/my-jobs/" class="nav-badge">My Jobs</a>
+                <a href="/accounts/dashboard/" class="nav-badge">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="page-hero">
+            <p class="eyebrow">Find work</p>
+            <h1>Browse Jobs</h1>
+            <p>Find open jobs that match your skills. Filter by category, budget, and distance.</p>
+        </div>
+
+        <div class="search-bar">
+            <form method="get" action="/jobs/" style="display: flex; gap: 10px; width: 100%;">
+                <input type="text" name="q" value="{{ query }}" placeholder="Search jobs by title, description, or location...">
+                <button type="submit">&#128269; Search</button>
+            </form>
+        </div>
+
+        <button class="mobile-filter-toggle" onclick="document.querySelector('.filter-card').classList.toggle('active')">
+            &#9776; Filters
+        </button>
+
+        <div class="browse-layout">
+            <aside class="filter-sidebar">
+                <form method="get" action="/jobs/" class="filter-card" id="filterForm">
+                    <h3>&#128293; Filters</h3>
+
+                    <div class="filter-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            {% for value, label in categories %}
+                            <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Budget Range (Rs.)</label>
+                        <div class="filter-budget-row">
+                            <input type="number" name="budget_min" value="{{ budget_min }}" placeholder="Min" min="0">
+                            <input type="number" name="budget_max" value="{{ budget_max }}" placeholder="Max" min="0">
+                        </div>
+                    </div>
+
+                    {% if request.user.is_authenticated %}
+                    <div class="filter-group">
+                        <label for="distance">Distance</label>
+                        <select id="distance" name="distance" onchange="this.form.submit()">
+                            <option value="">Any Distance</option>
+                            <option value="5" {% if selected_distance == '5' %}selected{% endif %}>Within 5 km</option>
+                            <option value="10" {% if selected_distance == '10' %}selected{% endif %}>Within 10 km</option>
+                            <option value="25" {% if selected_distance == '25' %}selected{% endif %}>Within 25 km</option>
+                            <option value="50" {% if selected_distance == '50' %}selected{% endif %}>Within 50 km</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="filter-group">
+                        <label for="sort">Sort By</label>
+                        <select id="sort" name="sort" onchange="this.form.submit()">
+                            <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                            <option value="budget_high" {% if selected_sort == 'budget_high' %}selected{% endif %}>Budget: High to Low</option>
+                            <option value="budget_low" {% if selected_sort == 'budget_low' %}selected{% endif %}>Budget: Low to High</option>
+                            <option value="date" {% if selected_sort == 'date' %}selected{% endif %}>Date: Soonest</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="filter-btn">Apply Filters</button>
+                    <button type="button" class="filter-clear" onclick="window.location='/jobs/'">Clear all filters</button>
+                </form>
+            </aside>
+
+            <div class="browse-content">
+                {% if query or selected_category or budget_min or budget_max or selected_distance %}
+                <div class="active-filters">
+                    {% if query %}
+                    <span class="filter-tag">Search: {{ query }} <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_min %}budget_min={{ budget_min }}&{% endif %}{% if budget_max %}budget_max={{ budget_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if selected_category %}
+                    <span class="filter-tag">Category: {{ selected_category }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if budget_min %}budget_min={{ budget_min }}&{% endif %}{% if budget_max %}budget_max={{ budget_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if budget_min %}
+                    <span class="filter-tag">Min: Rs. {{ budget_min }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_max %}budget_max={{ budget_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if budget_max %}
+                    <span class="filter-tag">Max: Rs. {{ budget_max }} <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_min %}budget_min={{ budget_min }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                    {% if selected_distance %}
+                    <span class="filter-tag">Within {{ selected_distance }} km <a href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_min %}budget_min={{ budget_min }}&{% endif %}{% if budget_max %}budget_max={{ budget_max }}&{% endif %}{% if selected_sort != 'newest' %}sort={{ selected_sort }}&{% endif %}">&times;</a></span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="browse-header">
+                    <div>
+                        <span class="browse-results">{{ jobs|length }} job{{ jobs|length|pluralize }} found</span>
+                    </div>
+                </div>
+
+                {% if jobs %}
+                <div class="job-grid">
+                    {% for job in jobs %}
+                    <a href="/jobs/{{ job.pk }}/" class="job-card">
+                        <div class="job-card-header">
+                            <h3>{{ job.title }}</h3>
+                            <span class="job-card-badge">{{ job.get_category_display }}</span>
+                        </div>
+                        <p>{{ job.description }}</p>
+                        <div class="job-card-meta">
+                            <span>&#128176; Rs. {{ job.budget }}</span>
+                            <span>&#128205; {{ job.address }}</span>
+                            <span>&#128197; {{ job.preferred_date }}</span>
+                            <span>&#128101; {{ job.workers_needed }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-results">
+                    <p>&#128269;</p>
+                    <h2>No jobs found</h2>
+                    <p>Try adjusting your filters or search terms.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/services/">Services</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/how-it-works/">How it works</a>
+            <a href="mailto:hello@ghantey.local">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

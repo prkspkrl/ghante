@@ -1,0 +1,56 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="admin-filters">
+    <form method="get" style="display:flex; gap:10px; align-items:center;">
+        <span style="font-weight:700; font-size:0.88rem;">Period:</span>
+        <select name="period" onchange="this.form.submit()">
+            <option value="7d" {% if selected_period == '7d' %}selected{% endif %}>Last 7 Days</option>
+            <option value="30d" {% if selected_period == '30d' %}selected{% endif %}>Last 30 Days</option>
+            <option value="90d" {% if selected_period == '90d' %}selected{% endif %}>Last 90 Days</option>
+            <option value="365d" {% if selected_period == '365d' %}selected{% endif %}>Last Year</option>
+        </select>
+    </form>
+</div>
+
+<div class="admin-stats">
+    <div class="stat-card"><div class="stat-label">New Users</div><div class="stat-value">{{ report.new_users }}</div></div>
+    <div class="stat-card"><div class="stat-label">New Workers</div><div class="stat-value green">{{ report.new_workers }}</div></div>
+    <div class="stat-card"><div class="stat-label">New Jobs</div><div class="stat-value">{{ report.new_jobs }}</div></div>
+    <div class="stat-card"><div class="stat-label">Completed Jobs</div><div class="stat-value green">{{ report.completed_jobs }}</div></div>
+    <div class="stat-card"><div class="stat-label">New Applications</div><div class="stat-value">{{ report.new_applications }}</div></div>
+    <div class="stat-card"><div class="stat-label">Accepted Applications</div><div class="stat-value green">{{ report.accepted_applications }}</div></div>
+    <div class="stat-card"><div class="stat-label">New Reviews</div><div class="stat-value">{{ report.new_reviews }}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Rating</div><div class="stat-value green">{{ report.avg_rating|floatformat:1 }}/5</div></div>
+    <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value green">Rs. {{ report.revenue|floatformat:0 }}</div></div>
+    <div class="stat-card"><div class="stat-label">Pending KYC</div><div class="stat-value orange">{{ report.pending_kyc }}</div></div>
+    <div class="stat-card"><div class="stat-label">Approved KYC</div><div class="stat-value green">{{ report.approved_kyc }}</div></div>
+    <div class="stat-card"><div class="stat-label">New Payments</div><div class="stat-value">{{ report.new_payments }}</div></div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>Top Categories</h2></div>
+        <table class="admin-table">
+            <thead><tr><th>Category</th><th>Jobs</th></tr></thead>
+            <tbody>
+            {% for cat in top_categories %}
+            <tr><td>{{ cat.category }}</td><td><strong>{{ cat.count }}</strong></td></tr>
+            {% empty %}<tr><td colspan="2" class="admin-empty">No data</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>Top Workers</h2></div>
+        <table class="admin-table">
+            <thead><tr><th>Worker</th><th>Reviews</th></tr></thead>
+            <tbody>
+            {% for w in top_workers %}
+            <tr><td>{{ w.name }}</td><td><strong>{{ w.review_count }}</strong></td></tr>
+            {% empty %}<tr><td colspan="2" class="admin-empty">No data</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

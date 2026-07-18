@@ -1,0 +1,138 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if job %}Edit{% else %}Post a{% endif %} Job | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/accounts/dashboard/" class="nav-badge">Dashboard</a>
+            <form method="post" action="/accounts/logout/" class="header-logout">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </header>
+    <main>
+        <div class="worker-form-layout">
+            <h1>{% if job %}Edit job{% else %}Post a new job{% endif %}</h1>
+            <p class="subtitle">Describe what you need done and find the right worker for the task.</p>
+
+            {% if messages %}
+            <div class="messages">
+                {% for msg in messages %}
+                <div class="msg {{ msg.tags }}">{{ msg }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="worker-form-card">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <label for="title">Job title *</label>
+                    <input id="title" name="title" type="text" value="{{ job.title|default:'' }}" placeholder="e.g. Need help assembling IKEA wardrobe" required>
+
+                    <label for="description">Description *</label>
+                    <textarea id="description" name="description" placeholder="Describe the job in detail — what needs to be done, any special requirements, etc." required>{{ job.description|default:'' }}</textarea>
+
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        {% for value, label in categories %}
+                        <option value="{{ value }}" {% if job.category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="address">Address / Location *</label>
+                    <input id="address" name="address" type="text" value="{{ job.address|default:'' }}" placeholder="e.g. Balaju, Kathmandu" required>
+                    <input type="hidden" id="latitude" name="latitude" value="{{ job.latitude|default:'' }}">
+                    <input type="hidden" id="longitude" name="longitude" value="{{ job.longitude|default:'' }}">
+                    <button type="button" onclick="getLocation()" style="display: inline-block; padding: 8px 14px; margin-bottom: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--green); font-weight: 600; font-size: 0.85rem; cursor: pointer;">&#128205; Use my current location</button>
+                    <span id="locationStatus" style="font-size: 0.8rem; color: var(--muted); margin-left: 8px;"></span>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px;">
+                        <div>
+                            <label for="budget">Budget (Rs.)</label>
+                            <input id="budget" name="budget" type="number" value="{{ job.budget|default:'0' }}" min="0" placeholder="e.g. 5000">
+                        </div>
+                        <div>
+                            <label for="hours_needed">Estimated hours</label>
+                            <input id="hours_needed" name="hours_needed" type="number" value="{{ job.hours_needed|default:'1' }}" min="1" placeholder="e.g. 4">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px;">
+                        <div>
+                            <label for="preferred_date">Preferred date *</label>
+                            <input id="preferred_date" name="preferred_date" type="date" value="{{ job.preferred_date|default:'' }}" required>
+                        </div>
+                        <div>
+                            <label for="workers_needed">Workers needed</label>
+                            <input id="workers_needed" name="workers_needed" type="number" value="{{ job.workers_needed|default:'1' }}" min="1" placeholder="e.g. 2">
+                        </div>
+                    </div>
+
+                    <label for="photos">Photos (optional)</label>
+                    <input id="photos" name="photos" type="file" accept="image/*" multiple style="padding: 10px; margin-bottom: 20px;">
+                    <p style="color: var(--muted); font-size: 0.85rem; margin: -16px 0 16px;">Upload photos to help workers understand the job. Max 5MB per image.</p>
+
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="draft" {% if job.status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="open" {% if job.status == 'open' or not job %}selected{% endif %}>Open</option>
+                    </select>
+
+                    <button type="submit">{% if job %}Save changes{% else %}Post job{% endif %} &rarr;</button>
+                </form>
+            </div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/workers/">Workers</a>
+            <a href="/how-it-works/">How it works</a>
+        </div>
+    </footer>
+    <script>
+    function getLocation() {
+        var status = document.getElementById('locationStatus');
+        if (!navigator.geolocation) {
+            status.textContent = 'Geolocation not supported.';
+            return;
+        }
+        status.textContent = 'Getting location...';
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            document.getElementById('latitude').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
+            status.textContent = 'Location captured!';
+            status.style.color = '#0f7b45';
+        }, function(err) {
+            status.textContent = 'Unable to get location.';
+            status.style.color = '#c62828';
+        });
+    }
+    </script>
+</body>
+</html>

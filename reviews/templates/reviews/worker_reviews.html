@@ -1,0 +1,158 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Reviews for {{ worker.name }} | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+    <style>
+        .reviews-page {
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+        .reviews-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .reviews-header h1 {
+            margin: 0 0 8px;
+        }
+        .reviews-header .avg-rating {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--green);
+        }
+        .reviews-header .stars {
+            font-size: 1.4rem;
+            color: #f5a623;
+        }
+        .reviews-header .count {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+        .review-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+            background: var(--white);
+        }
+        .review-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .reviewer-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .review-stars {
+            color: #f5a623;
+            font-size: 1rem;
+        }
+        .review-job {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        .review-comment {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--ink);
+        }
+        .review-date {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 10px;
+        }
+        .no-reviews {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .no-reviews p {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/workers/">Workers</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/" class="nav-badge">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="reviews-page">
+            <div class="reviews-header">
+                <h1>Reviews for {{ worker.name }}</h1>
+                <div class="avg-rating">{{ worker.rating }}</div>
+                <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <div class="count">{{ reviews|length }} review{{ reviews|length|pluralize }}</div>
+            </div>
+
+            {% if reviews %}
+            {% for review in reviews %}
+            <div class="review-card">
+                <div class="review-card-header">
+                    <span class="reviewer-name">{{ review.reviewer.username }}</span>
+                    <span class="review-stars">{% for i in "12345" %}{% if forloop.counter <= review.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+                </div>
+                {% if review.job %}
+                <div class="review-job">Job: {{ review.job.title }}</div>
+                {% endif %}
+                {% if review.comment %}
+                <div class="review-comment">{{ review.comment }}</div>
+                {% endif %}
+                <div class="review-date">{{ review.created_at|timesince }} ago</div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="no-reviews">
+                <p>&#128172;</p>
+                <h2>No reviews yet</h2>
+                <p>This worker hasn't received any reviews yet.</p>
+            </div>
+            {% endif %}
+
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="/workers/{{ worker.pk }}/" style="color: var(--green); font-weight: 600; text-decoration: none;">&larr; Back to {{ worker.name }}'s profile</a>
+            </div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/workers/">Workers</a>
+            <a href="/how-it-works/">How it works</a>
+        </div>
+    </footer>
+</body>
+</html>

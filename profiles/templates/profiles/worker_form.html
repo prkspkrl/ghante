@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% if worker %}Edit{% else %}Create{% endif %} Worker Profile | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
 </head>
 <body>
@@ -108,6 +109,10 @@
 
                     <label for="location">Location</label>
                     <input id="location" name="location" type="text" value="{{ worker.location|default:'' }}" placeholder="e.g. Kathmandu, Nepal">
+                    <input type="hidden" id="latitude" name="latitude" value="{{ worker.latitude|default:'' }}">
+                    <input type="hidden" id="longitude" name="longitude" value="{{ worker.longitude|default:'' }}">
+                    <button type="button" onclick="getLocation()" style="display: inline-block; padding: 8px 14px; margin-bottom: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--green); font-weight: 600; font-size: 0.85rem; cursor: pointer;">&#128205; Use my current location</button>
+                    <span id="locationStatus" style="font-size: 0.8rem; color: var(--muted); margin-left: 8px;"></span>
 
                     {% if worker %}
                     <label style="display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 20px; cursor: pointer;">
@@ -132,5 +137,24 @@
             <a href="/how-it-works/">How it works</a>
         </div>
     </footer>
+    <script>
+    function getLocation() {
+        var status = document.getElementById('locationStatus');
+        if (!navigator.geolocation) {
+            status.textContent = 'Geolocation not supported.';
+            return;
+        }
+        status.textContent = 'Getting location...';
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            document.getElementById('latitude').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
+            status.textContent = 'Location captured!';
+            status.style.color = '#0f7b45';
+        }, function(err) {
+            status.textContent = 'Unable to get location.';
+            status.style.color = '#c62828';
+        });
+    }
+    </script>
 </body>
 </html>

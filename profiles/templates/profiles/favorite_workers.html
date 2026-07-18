@@ -1,0 +1,106 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Favorite Workers | Ghantey</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}?v=5">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Ghantey home">Ghantey</a>
+        <button class="menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.nav').classList.toggle('open');document.querySelector('.header-actions').classList.toggle('open')">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/jobs/">Jobs</a>
+            <a href="/services/">Services</a>
+            <a href="/popular-projects/">Projects</a>
+            <a href="/how-it-works/">How it works</a>
+        </nav>
+        <div class="header-actions">
+            {% if request.user.is_authenticated %}
+                <a href="/accounts/dashboard/" class="nav-badge">Profile</a>
+                <form method="post" action="/accounts/logout/" class="header-logout">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            {% else %}
+                <a href="/accounts/login/">Log in</a>
+                <a class="tasker-link" href="/accounts/register/">Register</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        <div class="page-hero">
+            <p class="eyebrow">Favorites</p>
+            <h1>&#10084;&#65039; My Favorite Workers</h1>
+            <p>Workers you've saved for quick access.</p>
+        </div>
+        <div class="page-section">
+            {% if workers %}
+            <div class="worker-grid">
+                {% for w in workers %}
+                <a href="/workers/{{ w.pk }}/" class="worker-profile-card">
+                    <form method="post" action="/workers/{{ w.pk }}/favorite/" onclick="event.stopPropagation();" style="position: absolute; top: 12px; right: 12px; z-index: 2;">
+                        {% csrf_token %}
+                        <button type="submit" style="background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 4px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));" title="Remove from favorites">&#10084;&#65039;</button>
+                    </form>
+                    <div class="worker-card-cover"></div>
+                    <div class="worker-card-photo">
+                        {% if w.photo %}
+                        <img src="{{ w.photo.url }}" alt="{{ w.name }}" loading="lazy">
+                        {% else %}
+                        <img src="https://i.pravatar.cc/150?img={{ w.pk }}" alt="{{ w.name }}" loading="lazy">
+                        {% endif %}
+                    </div>
+                    <div class="worker-card-body">
+                        <h3>{{ w.name }}{% if w.is_verified %} <span style="color: var(--green); font-size: 0.8rem;">&#10003;</span>{% endif %}</h3>
+                        <div class="worker-card-tags">
+                            <span class="worker-card-tag">{{ w.skill }}</span>
+                        </div>
+                        <div class="worker-card-rating">
+                            <span class="worker-card-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                            <span class="worker-card-rating-num">{{ w.rating }}</span>
+                            <span class="worker-card-rating-count">({{ w.jobs_count }})</span>
+                        </div>
+                        <div class="worker-card-divider"></div>
+                        <div class="worker-card-rate-row">
+                            <span class="worker-card-price">Rs. {{ w.hourly_rate }} <small>/hr</small></span>
+                            <span class="worker-card-location">&#128205; {{ w.location }}</span>
+                        </div>
+                    </div>
+                    <span class="worker-card-arrow">&rarr;</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 80px 20px;">
+                <p style="font-size: 3rem; margin-bottom: 16px;">&#9825;</p>
+                <h2 style="margin-bottom: 8px;">No favorite workers yet</h2>
+                <p style="color: var(--muted);">Browse workers and tap the heart icon to save your favorites.</p>
+                <a href="/workers/" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: var(--green); color: white; border-radius: 10px; text-decoration: none; font-weight: 600;">Browse Workers</a>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div>
+            <a class="brand" href="/">Ghantey</a>
+            <p>Tackle your to-do list with trusted local help.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/services/">Services</a>
+            <a href="/workers/">Workers</a>
+            <a href="/how-it-works/">How it works</a>
+            <a href="mailto:hello@ghantey.local">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

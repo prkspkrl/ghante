@@ -1,0 +1,42 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="admin-card">
+        <div class="admin-card-header"><h2>All Categories</h2></div>
+        <table class="admin-table">
+            <thead><tr><th>Icon</th><th>Name</th><th>Slug</th><th>Jobs</th><th>Active</th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td>{{ cat.icon|safe }}</td>
+                <td><strong>{{ cat.name }}</strong></td>
+                <td>{{ cat.slug }}</td>
+                <td>{{ cat.job_count }}</td>
+                <td>{% if cat.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
+                <td style="display:flex; gap:6px;">
+                    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="category_id" value="{{ cat.pk }}"><button type="submit" class="admin-btn admin-btn-sm">{% if cat.is_active %}Deactivate{% else %}Activate{% endif %}</button></form>
+                    <form method="post" onsubmit="return confirm('Delete?');">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="category_id" value="{{ cat.pk }}"><button type="submit" class="admin-btn admin-btn-sm admin-btn-red">Delete</button></form>
+                </td>
+            </tr>
+            {% empty %}<tr><td colspan="6" class="admin-empty">No categories yet.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <div class="admin-card">
+            <div class="admin-card-header"><h2>Add Category</h2></div>
+            <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                <div class="admin-form-group"><label>Name</label><input type="text" name="name" required placeholder="e.g. Plumbing"></div>
+                <div class="admin-form-group"><label>Slug</label><input type="text" name="slug" required placeholder="e.g. plumbing"></div>
+                <div class="admin-form-group"><label>Description</label><textarea name="description" placeholder="Optional description"></textarea></div>
+                <div class="admin-form-group"><label>Icon (HTML entity)</label><input type="text" name="icon" placeholder="e.g. &#128295;"></div>
+                <button type="submit" class="admin-btn admin-btn-green">Create Category</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

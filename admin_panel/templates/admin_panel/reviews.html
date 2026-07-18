@@ -1,0 +1,40 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Reviews{% endblock %}
+{% block page_title %}Reviews{% endblock %}
+{% block content %}
+<div class="admin-filters">
+    <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search reviews...">
+        <select name="type">
+            <option value="">All Types</option>
+            <option value="customer_to_worker" {% if selected_type == 'customer_to_worker' %}selected{% endif %}>Customer to Worker</option>
+            <option value="worker_to_customer" {% if selected_type == 'worker_to_customer' %}selected{% endif %}>Worker to Customer</option>
+        </select>
+        <select name="rating">
+            <option value="">All Ratings</option>
+            {% for r in "12345" %}<option value="{{ r }}" {% if selected_rating == r %}selected{% endif %}>{{ r }} Star{{ r|pluralize }}</option>{% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+</div>
+<div class="admin-card">
+    <table class="admin-table">
+        <thead><tr><th>Reviewer</th><th>Worker</th><th>Type</th><th>Rating</th><th>Comment</th><th>Date</th><th></th></tr></thead>
+        <tbody>
+        {% for r in reviews %}
+        <tr>
+            <td>{{ r.reviewer.username|default:"-" }}</td>
+            <td>{{ r.worker.name|default:"-" }}</td>
+            <td><span class="badge {% if r.review_type == 'customer_to_worker' %}badge-blue{% else %}badge-purple{% endif %}">{{ r.review_type }}</span></td>
+            <td>{% for i in "12345" %}{% if forloop.counter <= r.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</td>
+            <td>{{ r.comment|truncatewords:8|default:"-" }}</td>
+            <td>{{ r.created_at|timesince }} ago</td>
+            <td>
+                <form method="post" onsubmit="return confirm('Delete this review?');">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="review_id" value="{{ r.pk }}"><button type="submit" class="admin-btn admin-btn-sm admin-btn-red">Delete</button></form>
+            </td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="admin-empty">No reviews found.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

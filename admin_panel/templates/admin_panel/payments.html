@@ -1,0 +1,43 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Payments{% endblock %}
+{% block page_title %}Payments{% endblock %}
+{% block content %}
+<div class="admin-filters">
+    <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search payments...">
+        <select name="status">
+            <option value="">All Status</option>
+            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid</option>
+            <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>Failed</option>
+            <option value="refunded" {% if selected_status == 'refunded' %}selected{% endif %}>Refunded</option>
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+</div>
+<div class="admin-card">
+    <table class="admin-table">
+        <thead><tr><th>Payer</th><th>Amount</th><th>Status</th><th>Reference</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for pay in payments %}
+        <tr>
+            <td><strong>{{ pay.payer_name }}</strong></td>
+            <td>Rs. {{ pay.amount }}</td>
+            <td><span class="badge {% if pay.status == 'paid' %}badge-green{% elif pay.status == 'failed' %}badge-red{% elif pay.status == 'refunded' %}badge-orange{% else %}badge-gray{% endif %}">{{ pay.status }}</span></td>
+            <td>{{ pay.reference|default:"-" }}</td>
+            <td>{{ pay.created_at|timesince }} ago</td>
+            <td style="display:flex; gap:6px;">
+                <form method="post" style="display:flex; gap:4px;">{% csrf_token %}<input type="hidden" name="action" value="update_status"><input type="hidden" name="payment_id" value="{{ pay.pk }}">
+                    <select name="new_status" style="padding:4px 8px; border:1px solid #e0e0e0; border-radius:6px; font-size:0.8rem;">
+                        {% for value, label in pay.STATUS_CHOICES %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                    </select>
+                    <button type="submit" class="admin-btn admin-btn-sm">Save</button>
+                </form>
+                <form method="post" onsubmit="return confirm('Delete?');">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="payment_id" value="{{ pay.pk }}"><button type="submit" class="admin-btn admin-btn-sm admin-btn-red">Del</button></form>
+            </td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="admin-empty">No payments found.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

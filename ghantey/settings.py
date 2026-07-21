@@ -13,7 +13,7 @@ SECRET_KEY = os.environ.get(
     'django-insecure-)uk)xcqf91&b1$sn1qf&$t_%1ukk5g37^qwtm9p3uwb5g%#&vt',
 )
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,ghante.onrender.com').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',

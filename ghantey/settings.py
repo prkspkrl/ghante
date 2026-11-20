@@ -7,11 +7,12 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security: read from environment, fall back to dev defaults
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-)uk)xcqf91&b1$sn1qf&$t_%1ukk5g37^qwtm9p3uwb5g%#&vt',
-)
+# Security: never use a hardcoded fallback for Django's secret key.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise RuntimeError(
+        'DJANGO_SECRET_KEY must be set in the environment before starting Ghante.'
+    )
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,ghante.onrender.com').split(',')
 
